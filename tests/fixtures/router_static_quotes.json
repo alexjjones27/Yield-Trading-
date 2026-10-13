@@ -1,0 +1,668 @@
+[
+ {
+  "name": "apyUSD",
+  "chain": 1,
+  "market": "0xc5f938a8ef5f3bf9e72f5aa094baf5e03f4727d3",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 7565932.492515177,
+   "total_sy": 8704643.839118497,
+   "total_lp": 8330100.857659238,
+   "scalar_root": 22.85655182127381,
+   "expiry": 1793836800,
+   "ln_fee_root": 0.002871483752297585,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.14982564749407812
+  },
+  "index": 1.4415888101268404,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     19492,
+     13394.67617494602
+    ],
+    "swapExactSyForPtStatic": [
+     19492,
+     28353.756036580973
+    ],
+    "swapExactSyForYtStatic": [
+     974.6,
+     149001.90458600447
+    ],
+    "swapExactYtForSyStatic": [
+     19492,
+     121.49017010266827
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     194915,
+     133930.12915367368
+    ],
+    "swapExactSyForPtStatic": [
+     194915,
+     283469.3531104896
+    ],
+    "swapExactSyForYtStatic": [
+     9745.75,
+     1390793.632591725
+    ],
+    "swapExactYtForSyStatic": [
+     194915,
+     1201.5165622100667
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     974576,
+     669364.2238694883
+    ],
+    "swapExactSyForPtStatic": [
+     974576,
+     1416419.1468800942
+    ],
+    "swapExactSyForYtStatic": [
+     48728.8,
+     5665553.621495856
+    ],
+    "swapExactYtForSyStatic": [
+     974576,
+     5701.663338589418
+    ]
+   }
+  ]
+ },
+ {
+  "name": "reUSD",
+  "chain": 1,
+  "market": "0x13285bcbc27f92b47b4edb99d744c07b48c977c0",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 5.81619179344e-06,
+   "total_sy": 6056701.041270012,
+   "total_lp": 5.734510685201311,
+   "scalar_root": 35.82873882834193,
+   "expiry": 1796860800,
+   "ln_fee_root": 0.002213679299697934,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.11425627771221974
+  },
+  "index": 1.106787e-12,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     12419,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     12419,
+     1.3988855626e-08
+    ],
+    "swapExactSyForYtStatic": [
+     620.95,
+     3.7728017114e-08
+    ],
+    "swapExactYtForSyStatic": [
+     12419,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     124189,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     124189,
+     1.39867101003e-07
+    ],
+    "swapExactSyForYtStatic": [
+     6209.45,
+     3.68230690079e-07
+    ],
+    "swapExactYtForSyStatic": [
+     124189,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     620947,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     620947,
+     6.98756211944e-07
+    ],
+    "swapExactSyForYtStatic": [
+     31047.35,
+     1.679790000028e-06
+    ],
+    "swapExactYtForSyStatic": [
+     620947,
+     null
+    ]
+   }
+  ]
+ },
+ {
+  "name": "siUSD",
+  "chain": 1,
+  "market": "0xd44f2630260ff3805d7cb317d4f6740b0044c408",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 8057840.076954316,
+   "total_sy": 3483416.9928503586,
+   "total_lp": 5630906.0811392255,
+   "scalar_root": 55.02374145818716,
+   "expiry": 1799280000,
+   "ln_fee_root": 0.001925396349385888,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.10590656469788563
+  },
+  "index": 1.0943451561442914,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     11672,
+     10399.677738410826
+    ],
+    "swapExactSyForPtStatic": [
+     11672,
+     13087.426596303489
+    ],
+    "swapExactSyForYtStatic": [
+     583.6,
+     25579.601883899617
+    ],
+    "swapExactYtForSyStatic": [
+     11672,
+     256.2926258218073
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     116721,
+     103979.99045649111
+    ],
+    "swapExactSyForPtStatic": [
+     116721,
+     130843.84777222418
+    ],
+    "swapExactSyForYtStatic": [
+     5836.05,
+     252139.01904621866
+    ],
+    "swapExactYtForSyStatic": [
+     116721,
+     2545.558536468832
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     583605,
+     519489.06639820785
+    ],
+    "swapExactSyForPtStatic": [
+     583605,
+     653686.9205219336
+    ],
+    "swapExactSyForYtStatic": [
+     29180.25,
+     1183473.2205198403
+    ],
+    "swapExactYtForSyStatic": [
+     583605,
+     12353.945438445757
+    ]
+   }
+  ]
+ },
+ {
+  "name": "USD3",
+  "chain": 1,
+  "market": "0x4a5067c3ff1abb7449244025b0e37feaf77d8e3e",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 5.099806706133e-06,
+   "total_sy": 1.84152518106e-06,
+   "total_lp": 2.526009104247e-06,
+   "scalar_root": 27.888389478413448,
+   "expiry": 1797465600,
+   "ln_fee_root": 0.002640493785035549,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.1402175190838794
+  },
+  "index": 1.182952306702863,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     7209,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     7209,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     360.45,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     7209,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     72095,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     72095,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     3604.75,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     72095,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     360473,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     360473,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     18023.65,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     360473,
+     null
+    ]
+   }
+  ]
+ },
+ {
+  "name": "sUSDx",
+  "chain": 1,
+  "market": "0x5e572498e9f83650f0ff24194999bddb4b390928",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 3475725.001068729,
+   "total_sy": 3396778.7489855792,
+   "total_lp": 3194525.9127493114,
+   "scalar_root": 22.710418238580115,
+   "expiry": 1796256000,
+   "ln_fee_root": 0.003526269162024027,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.17105705554926692
+  },
+  "index": 1.037253965652496,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     6917,
+     6509.43940885811
+    ],
+    "swapExactSyForPtStatic": [
+     6917,
+     7342.439133772041
+    ],
+    "swapExactSyForYtStatic": [
+     345.85,
+     15015.35869961091
+    ],
+    "swapExactYtForSyStatic": [
+     6917,
+     152.47586351313666
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     69170,
+     65080.632234208235
+    ],
+    "swapExactSyForPtStatic": [
+     69170,
+     73405.34480300244
+    ],
+    "swapExactSyForYtStatic": [
+     3458.5,
+     147443.229953778
+    ],
+    "swapExactYtForSyStatic": [
+     69170,
+     1510.972159692264
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     345848,
+     325094.8241258692
+    ],
+    "swapExactSyForPtStatic": [
+     345848,
+     366658.4910104651
+    ],
+    "swapExactSyForYtStatic": [
+     17292.4,
+     686241.4933674717
+    ],
+    "swapExactYtForSyStatic": [
+     345848,
+     7246.694788285449
+    ]
+   }
+  ]
+ },
+ {
+  "name": "sUSDD",
+  "chain": 1,
+  "market": "0xbeab098b510f758cd35122ee345957b8eccbb322",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 2092370.116382893,
+   "total_sy": 2868711.919787811,
+   "total_lp": 2339436.99943035,
+   "scalar_root": 76.3962199614172,
+   "expiry": 1795651200,
+   "ln_fee_root": 0.001008265897332722,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.053142132573229625
+  },
+  "index": 1.0689355494691164,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     5139,
+     4776.668560944421
+    ],
+    "swapExactSyForPtStatic": [
+     5139,
+     5527.0059153856055
+    ],
+    "swapExactSyForYtStatic": [
+     256.95,
+     42404.12984652643
+    ],
+    "swapExactYtForSyStatic": [
+     5139,
+     29.710047289838847
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     51392,
+     47765.805749733714
+    ],
+    "swapExactSyForPtStatic": [
+     51392,
+     55270.059153856055
+    ],
+    "swapExactSyForYtStatic": [
+     2569.6,
+     397718.8996849955
+    ],
+    "swapExactYtForSyStatic": [
+     51392,
+     294.34852226361426
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     256961,
+     238770.00780157943
+    ],
+    "swapExactSyForPtStatic": [
+     256961,
+     276272.9949872469
+    ],
+    "swapExactSyForYtStatic": [
+     12848.05,
+     1622814.5325937031
+    ],
+    "swapExactYtForSyStatic": [
+     256961,
+     1408.8410164540219
+    ]
+   }
+  ]
+ },
+ {
+  "name": "wstETH",
+  "chain": 1,
+  "market": "0x34280882267ffa6383b363e278b027be083bbe3b",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 99.37504788736928,
+   "total_sy": 1567.8224557622652,
+   "total_lp": 920.9183140322866,
+   "scalar_root": 86.36456,
+   "expiry": 1830124800,
+   "ln_fee_root": 0.000499875041,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.021111892458016625
+  },
+  "index": 1.2462411420598685,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     5128,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     5128,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     256.4,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     5128,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     51277,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     51277,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     2563.85,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     51277,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     256384,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     256384,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     12819.2,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     256384,
+     null
+    ]
+   }
+  ]
+ },
+ {
+  "name": "sUSDS",
+  "chain": 1,
+  "market": "0x9c560ebaf78e596cbcc27411d633a74d628dd7dc",
+  "block": 26183821,
+  "ts": 1791897527,
+  "state": {
+   "total_pt": 1041664.7075839546,
+   "total_sy": 3357594.745428362,
+   "total_lp": 1523618.6561596612,
+   "scalar_root": 50.49279455297613,
+   "expiry": 1795651200,
+   "ln_fee_root": 0.000998078321070529,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.047693232657138394
+  },
+  "index": 1.1126711609730746,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     4775,
+     4266.616146276851
+    ],
+    "swapExactSyForPtStatic": [
+     4775,
+     5342.0809600863695
+    ],
+    "swapExactSyForYtStatic": [
+     238.75,
+     44980.62698333602
+    ],
+    "swapExactYtForSyStatic": [
+     4775,
+     23.727283527031545
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     47748,
+     42659.19191748654
+    ],
+    "swapExactSyForPtStatic": [
+     47748,
+     53412.04778200181
+    ],
+    "swapExactSyForYtStatic": [
+     2387.4,
+     391780.479939083
+    ],
+    "swapExactYtForSyStatic": [
+     47748,
+     231.8854694715712
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     238742,
+     213190.46507848962
+    ],
+    "swapExactSyForPtStatic": [
+     238742,
+     266892.0119878611
+    ],
+    "swapExactSyForYtStatic": [
+     11937.1,
+     1476196.3192138043
+    ],
+    "swapExactYtForSyStatic": [
+     238742,
+     1027.958597809512
+    ]
+   }
+  ]
+ },
+ {
+  "name": "sUSDai",
+  "chain": 42161,
+  "market": "0xf86119a39f8654f38acbbd5488bd83f3f51983c8",
+  "block": 514441630,
+  "ts": 1791897850,
+  "state": {
+   "total_pt": 2349279.49537543,
+   "total_sy": 1068375.4334500441,
+   "total_lp": 1587951.2743511803,
+   "scalar_root": 44.97678294383459,
+   "expiry": 1803513600,
+   "ln_fee_root": 0.001917840236315452,
+   "reserve_fee_pct": 80,
+   "ln_implied": 0.09130927134320559
+  },
+  "index": 1.1184955255756999,
+  "quotes": [
+   {
+    "swapExactPtForSyStatic": [
+     3467,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     3467,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     173.35,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     3467,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     34666,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     34666,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     1733.3,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     34666,
+     null
+    ]
+   },
+   {
+    "swapExactPtForSyStatic": [
+     173328,
+     null
+    ],
+    "swapExactSyForPtStatic": [
+     173328,
+     null
+    ],
+    "swapExactSyForYtStatic": [
+     8666.4,
+     null
+    ],
+    "swapExactYtForSyStatic": [
+     173328,
+     null
+    ]
+   }
+  ]
+ }
+]
