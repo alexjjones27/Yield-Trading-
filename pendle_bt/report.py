@@ -38,12 +38,22 @@ def equity_chart(path):
     order = ["PT dislocation", "LP carry", "PT carry (no signal)", "Combined PT/YT/LP",
              "YT dislocation", "Hold sUSDe", "Cash (Aave USDC)"]
     fig, ax = plt.subplots(figsize=(10, 5.2))
-    for i, name in enumerate([o for o in order if o in eq]):
+    names = [o for o in order if o in eq]
+    ends = {}
+    for i, name in enumerate(names):
         s = eq[name].dropna() * 10_000
         ax.plot(s.index, s.values, color=SERIES[i], linewidth=2, label=name)
-        ax.annotate(f"{name}  ${s.iloc[-1]:,.0f}", (s.index[-1], s.iloc[-1]),
-                    xytext=(6, 0), textcoords="offset points", va="center",
-                    fontsize=8, color=INK2)
+        ends[name] = (s.index[-1], s.iloc[-1])
+    # direct labels at line ends, nudged apart so they never overlap
+    span = max(v for _, v in ends.values()) - min(v for _, v in ends.values())
+    gap = span * 0.045
+    placed = []
+    for name, (x, y) in sorted(ends.items(), key=lambda kv: -kv[1][1]):
+        ly = y if not placed else min(y, placed[-1] - gap)
+        placed.append(ly)
+        ax.annotate(f"{name}  ${y:,.0f}", (x, y), xytext=(x + pd.Timedelta(days=8), ly),
+                    va="center", fontsize=8, color=INK2,
+                    arrowprops=dict(arrowstyle="-", color=GRID, lw=0.8))
     _style(ax, "Out-of-sample equity, $10,000 start (walk-forward, net of all costs)",
            "Liquidation value (USD)")
     ax.legend(frameon=False, fontsize=8, loc="upper left")

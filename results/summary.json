@@ -1,0 +1,1113 @@
+{
+ "universe": {
+  "markets": 317,
+  "market_days": 38069,
+  "first": "2023-03-08",
+  "last": "2026-10-13"
+ },
+ "study": {
+  "market_days": 8087,
+  "markets": 87,
+  "mean_fwd_spread": 0.0278,
+  "median_fwd_spread": 0.017,
+  "pt_beats_floating": 0.7527,
+  "corr_trail_fwd": 0.1665
+ },
+ "oos": {
+  "Cash (Aave USDC)": {
+   "ret": 0.0684,
+   "cagr": 0.0378,
+   "vol": 0.0007,
+   "sharpe": 50.6059,
+   "maxdd": 0.0,
+   "days": 651,
+   "excess_sharpe": -0.7488
+  },
+  "Hold sUSDe": {
+   "ret": 0.1034,
+   "cagr": 0.0567,
+   "vol": 0.015,
+   "sharpe": 3.6893,
+   "maxdd": -0.0098,
+   "days": 651,
+   "excess_sharpe": 1.2143
+  },
+  "PT carry (no signal)": {
+   "ret": 0.2358,
+   "cagr": 0.1263,
+   "vol": 0.0239,
+   "sharpe": 4.9963,
+   "maxdd": -0.0111,
+   "days": 650,
+   "excess_sharpe": 3.4431
+  },
+  "PT dislocation": {
+   "ret": 0.2094,
+   "cagr": 0.1127,
+   "vol": 0.0264,
+   "sharpe": 4.0634,
+   "maxdd": -0.0108,
+   "days": 650,
+   "excess_sharpe": 2.657
+  },
+  "YT dislocation": {
+   "ret": -0.1126,
+   "cagr": -0.0649,
+   "vol": 0.0815,
+   "sharpe": -0.7819,
+   "maxdd": -0.2031,
+   "days": 650,
+   "excess_sharpe": -1.2378
+  },
+  "LP carry": {
+   "ret": 0.2008,
+   "cagr": 0.1082,
+   "vol": 0.021,
+   "sharpe": 4.9027,
+   "maxdd": -0.0137,
+   "days": 650,
+   "excess_sharpe": 3.1394
+  },
+  "Combined PT/YT/LP": {
+   "ret": 0.2124,
+   "cagr": 0.1142,
+   "vol": 0.0486,
+   "sharpe": 2.2483,
+   "maxdd": -0.0335,
+   "days": 650,
+   "excess_sharpe": 1.486
+  }
+ },
+ "oos_window": [
+  "2024-12-31",
+  "2026-10-12"
+ ],
+ "picks": {
+  "pt_naive": [
+   {
+    "train_end": "2024-12-31",
+    "test_end": "2025-06-30",
+    "is_score": 0.10382005418084467,
+    "oos": {
+     "ret": 0.0719,
+     "cagr": 0.1504,
+     "vol": 0.0293,
+     "sharpe": 4.7923,
+     "maxdd": -0.0111,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "naive": true,
+     "pt_exit": -9.0,
+     "pt_min_carry": 0.04,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 25000000.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2025-06-30",
+    "test_end": "2025-12-31",
+    "is_score": 0.11610161649258693,
+    "oos": {
+     "ret": 0.0649,
+     "cagr": 0.1329,
+     "vol": 0.0262,
+     "sharpe": 4.7849,
+     "maxdd": -0.0064,
+     "days": 184
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "naive": true,
+     "pt_exit": -9.0,
+     "pt_min_carry": 0.04,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 25000000.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2025-12-31",
+    "test_end": "2026-06-30",
+    "is_score": 0.11803895730833552,
+    "oos": {
+     "ret": 0.0444,
+     "cagr": 0.0916,
+     "vol": 0.0102,
+     "sharpe": 8.6002,
+     "maxdd": -0.0032,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "naive": true,
+     "pt_exit": -9.0,
+     "pt_min_carry": 0.04,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 25000000.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2026-06-30",
+    "test_end": "2026-10-12",
+    "is_score": 0.1108901058067861,
+    "oos": {
+     "ret": 0.0366,
+     "cagr": 0.1344,
+     "vol": 0.0261,
+     "sharpe": 4.8491,
+     "maxdd": -0.0036,
+     "days": 104
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "naive": true,
+     "pt_exit": -9.0,
+     "pt_min_carry": 0.04,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 25000000.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 21
+    }
+   }
+  ],
+  "pt": [
+   {
+    "train_end": "2024-12-31",
+    "test_end": "2025-06-30",
+    "is_score": 0.13140401178614902,
+    "oos": {
+     "ret": 0.0741,
+     "cagr": 0.155,
+     "vol": 0.0299,
+     "sharpe": 4.8351,
+     "maxdd": -0.0108,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "forecast": "ema30",
+     "blend_w": 0.5,
+     "achievable": "own",
+     "pt_entry": 0.04,
+     "pt_exit": 0.0,
+     "pt_min_carry": 0.02,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2025-06-30",
+    "test_end": "2025-12-31",
+    "is_score": 0.1363666266117023,
+    "oos": {
+     "ret": 0.0586,
+     "cagr": 0.1196,
+     "vol": 0.0302,
+     "sharpe": 3.7563,
+     "maxdd": -0.0102,
+     "days": 184
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "forecast": "ema30",
+     "blend_w": 0.5,
+     "achievable": "own",
+     "pt_entry": 0.04,
+     "pt_exit": 0.0,
+     "pt_min_carry": 0.02,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2025-12-31",
+    "test_end": "2026-06-30",
+    "is_score": 0.12992030794048937,
+    "oos": {
+     "ret": 0.0312,
+     "cagr": 0.0639,
+     "vol": 0.0166,
+     "sharpe": 3.739,
+     "maxdd": -0.0048,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "forecast": "ema30",
+     "blend_w": 0.5,
+     "achievable": "own",
+     "pt_entry": 0.04,
+     "pt_exit": 0.0,
+     "pt_min_carry": 0.02,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2026-06-30",
+    "test_end": "2026-10-12",
+    "is_score": 0.11500913902287252,
+    "oos": {
+     "ret": 0.0315,
+     "cagr": 0.1151,
+     "vol": 0.0265,
+     "sharpe": 4.1321,
+     "maxdd": -0.0036,
+     "days": 104
+    },
+    "params": {
+     "instruments": [
+      "pt"
+     ],
+     "forecast": "ema30",
+     "blend_w": 1.0,
+     "achievable": "max_cash",
+     "pt_entry": 0.01,
+     "pt_exit": 0.0,
+     "pt_min_carry": 0.02,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 60
+    }
+   }
+  ],
+  "yt": [
+   {
+    "train_end": "2024-12-31",
+    "test_end": "2025-06-30",
+    "is_score": 0.10978694753434953,
+    "oos": {
+     "ret": 0.0063,
+     "cagr": 0.0128,
+     "vol": 0.0949,
+     "sharpe": 0.1815,
+     "maxdd": -0.0807,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "yt"
+     ],
+     "forecast": "ema7",
+     "blend_w": 0.5,
+     "yt_entry": 0.0,
+     "yt_exit": -0.02,
+     "yt_max_frac": 0.1,
+     "max_yt_impact": 0.01,
+     "min_tvl": 1000000.0,
+     "min_tau_yt": 60,
+     "max_frac_market": 0.25,
+     "stop_loss_yt": -0.9
+    }
+   },
+   {
+    "train_end": "2025-06-30",
+    "test_end": "2025-12-31",
+    "is_score": 0.07428042559845305,
+    "oos": {
+     "ret": -0.0342,
+     "cagr": -0.0668,
+     "vol": 0.0898,
+     "sharpe": -0.7248,
+     "maxdd": -0.0951,
+     "days": 184
+    },
+    "params": {
+     "instruments": [
+      "yt"
+     ],
+     "forecast": "ema7",
+     "blend_w": 1.0,
+     "yt_entry": 0.02,
+     "yt_exit": -0.02,
+     "yt_max_frac": 0.1,
+     "max_yt_impact": 0.01,
+     "min_tvl": 1000000.0,
+     "min_tau_yt": 30,
+     "max_frac_market": 0.25,
+     "stop_loss_yt": -0.5
+    }
+   },
+   {
+    "train_end": "2025-12-31",
+    "test_end": "2026-06-30",
+    "is_score": 0.05403021376990774,
+    "oos": {
+     "ret": -0.0958,
+     "cagr": -0.1837,
+     "vol": 0.0817,
+     "sharpe": -2.4432,
+     "maxdd": -0.1181,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "yt"
+     ],
+     "forecast": "ema7",
+     "blend_w": 0.5,
+     "yt_entry": 0.0,
+     "yt_exit": -0.02,
+     "yt_max_frac": 0.1,
+     "max_yt_impact": 0.01,
+     "min_tvl": 1000000.0,
+     "min_tau_yt": 60,
+     "max_frac_market": 0.25,
+     "stop_loss_yt": -0.9
+    }
+   },
+   {
+    "train_end": "2026-06-30",
+    "test_end": "2026-10-12",
+    "is_score": 0.047335536389662536,
+    "oos": {
+     "ret": 0.0098,
+     "cagr": 0.0347,
+     "vol": 0.0002,
+     "sharpe": 169.3153,
+     "maxdd": 0.0,
+     "days": 104
+    },
+    "params": {
+     "instruments": [
+      "yt"
+     ],
+     "forecast": "ema30",
+     "blend_w": 1.0,
+     "yt_entry": 0.05,
+     "yt_exit": 0.0,
+     "yt_max_frac": 0.1,
+     "max_yt_impact": 0.005,
+     "min_tvl": 5000000.0,
+     "min_tau_yt": 60,
+     "max_frac_market": 0.25,
+     "stop_loss_yt": -0.5
+    }
+   }
+  ],
+  "lp": [
+   {
+    "train_end": "2024-12-31",
+    "test_end": "2025-06-30",
+    "is_score": 0.11120738035546068,
+    "oos": {
+     "ret": 0.0635,
+     "cagr": 0.1323,
+     "vol": 0.0315,
+     "sharpe": 3.9637,
+     "maxdd": -0.0137,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "lp"
+     ],
+     "forecast": "ema30",
+     "lp_entry": 0.02,
+     "lp_band": 1.0,
+     "lp_max_frac": 1.0,
+     "min_tvl": 5000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 60
+    }
+   },
+   {
+    "train_end": "2025-06-30",
+    "test_end": "2025-12-31",
+    "is_score": 0.1154723234406258,
+    "oos": {
+     "ret": 0.0545,
+     "cagr": 0.111,
+     "vol": 0.0138,
+     "sharpe": 7.6627,
+     "maxdd": -0.003,
+     "days": 184
+    },
+    "params": {
+     "instruments": [
+      "lp"
+     ],
+     "forecast": "ema30",
+     "lp_entry": 0.02,
+     "lp_band": 1.0,
+     "lp_max_frac": 1.0,
+     "min_tvl": 5000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 60
+    }
+   },
+   {
+    "train_end": "2025-12-31",
+    "test_end": "2026-06-30",
+    "is_score": 0.11227930197847508,
+    "oos": {
+     "ret": 0.038,
+     "cagr": 0.0781,
+     "vol": 0.0072,
+     "sharpe": 10.4408,
+     "maxdd": -0.0033,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "lp"
+     ],
+     "forecast": "ema30",
+     "lp_entry": 0.02,
+     "lp_band": 1.0,
+     "lp_max_frac": 1.0,
+     "min_tvl": 5000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 60
+    }
+   },
+   {
+    "train_end": "2026-06-30",
+    "test_end": "2026-10-12",
+    "is_score": 0.10373282299178549,
+    "oos": {
+     "ret": 0.0315,
+     "cagr": 0.115,
+     "vol": 0.0248,
+     "sharpe": 4.3983,
+     "maxdd": -0.0035,
+     "days": 104
+    },
+    "params": {
+     "instruments": [
+      "lp"
+     ],
+     "forecast": "ema30",
+     "lp_entry": 0.02,
+     "lp_band": 1.0,
+     "lp_max_frac": 1.0,
+     "min_tvl": 5000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 1.0,
+     "min_tau_pt": 60
+    }
+   }
+  ],
+  "combo": [
+   {
+    "train_end": "2024-12-31",
+    "test_end": "2025-06-30",
+    "is_score": 0.12114722715282594,
+    "oos": {
+     "ret": 0.0815,
+     "cagr": 0.1712,
+     "vol": 0.0299,
+     "sharpe": 5.2985,
+     "maxdd": -0.0096,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt",
+      "yt",
+      "lp"
+     ],
+     "forecast": "ema30",
+     "achievable": "max_cash",
+     "pt_entry": 0.01,
+     "pt_exit": -0.01,
+     "yt_entry": 0.05,
+     "yt_max_frac": 0.1,
+     "lp_entry": 0.02,
+     "lp_band": 0.02,
+     "lp_max_frac": 0.5,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 21
+    }
+   },
+   {
+    "train_end": "2025-06-30",
+    "test_end": "2025-12-31",
+    "is_score": 0.17681319335544687,
+    "oos": {
+     "ret": 0.0762,
+     "cagr": 0.1567,
+     "vol": 0.0802,
+     "sharpe": 1.8556,
+     "maxdd": -0.0335,
+     "days": 184
+    },
+    "params": {
+     "instruments": [
+      "pt",
+      "yt"
+     ],
+     "forecast": "ema7",
+     "achievable": "max_cash",
+     "pt_entry": 0.01,
+     "pt_exit": -0.01,
+     "yt_entry": 0.02,
+     "yt_max_frac": 0.2,
+     "lp_entry": 0.04,
+     "lp_band": 0.02,
+     "lp_max_frac": 0.5,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 60
+    }
+   },
+   {
+    "train_end": "2025-12-31",
+    "test_end": "2026-06-30",
+    "is_score": 0.16319149638687613,
+    "oos": {
+     "ret": 0.0104,
+     "cagr": 0.0211,
+     "vol": 0.028,
+     "sharpe": 0.7591,
+     "maxdd": -0.0228,
+     "days": 181
+    },
+    "params": {
+     "instruments": [
+      "pt",
+      "yt"
+     ],
+     "forecast": "ema7",
+     "achievable": "max_cash",
+     "pt_entry": 0.01,
+     "pt_exit": -0.01,
+     "yt_entry": 0.02,
+     "yt_max_frac": 0.2,
+     "lp_entry": 0.04,
+     "lp_band": 0.02,
+     "lp_max_frac": 0.5,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 60
+    }
+   },
+   {
+    "train_end": "2026-06-30",
+    "test_end": "2026-10-12",
+    "is_score": 0.12614408729315651,
+    "oos": {
+     "ret": 0.031,
+     "cagr": 0.1132,
+     "vol": 0.0223,
+     "sharpe": 4.8279,
+     "maxdd": -0.003,
+     "days": 104
+    },
+    "params": {
+     "instruments": [
+      "pt",
+      "yt"
+     ],
+     "forecast": "ema7",
+     "achievable": "max_cash",
+     "pt_entry": 0.01,
+     "pt_exit": -0.01,
+     "yt_entry": 0.02,
+     "yt_max_frac": 0.2,
+     "lp_entry": 0.04,
+     "lp_band": 0.02,
+     "lp_max_frac": 0.5,
+     "min_tvl": 1000000.0,
+     "min_under_tvl": 0.0,
+     "max_frac_market": 0.5,
+     "min_tau_pt": 60
+    }
+   }
+  ]
+ },
+ "oos_distribution": {
+  "PT carry (no signal)": {
+   "n": 72,
+   "median": 0.2209038118956681,
+   "p10": 0.20603912923949774,
+   "p90": 0.2308878535689168,
+   "worst": 0.15196116624716027,
+   "best": 0.23579963680772376,
+   "beat_cash": 1.0,
+   "beat_susde": 1.0,
+   "median_maxdd": -0.013385883074725269,
+   "worst_maxdd": -0.0673664035770315
+  },
+  "PT dislocation": {
+   "n": 140,
+   "median": 0.2092698343151459,
+   "p10": 0.1838890052887887,
+   "p90": 0.2267858042945153,
+   "worst": 0.16215353284902023,
+   "best": 0.23829280134228048,
+   "beat_cash": 1.0,
+   "beat_susde": 1.0,
+   "median_maxdd": -0.011100413758395655,
+   "worst_maxdd": -0.022428703190480737
+  },
+  "YT dislocation": {
+   "n": 70,
+   "median": -0.06801047712038505,
+   "p10": -0.42558809530004904,
+   "p90": 0.05316133583420815,
+   "worst": -0.6134757299832634,
+   "best": 0.24368741671217742,
+   "beat_cash": 0.08571428571428572,
+   "beat_susde": 0.014285714285714285,
+   "median_maxdd": -0.14999766111783935,
+   "worst_maxdd": -0.6635571048266746
+  },
+  "LP carry": {
+   "n": 90,
+   "median": 0.1558043176179661,
+   "p10": 0.10561084670496293,
+   "p90": 0.20919545033043163,
+   "worst": 0.09766728835470229,
+   "best": 0.23427037408853102,
+   "beat_cash": 1.0,
+   "beat_susde": 0.9444444444444444,
+   "median_maxdd": -0.015220314791168088,
+   "worst_maxdd": -0.028868466311557373
+  },
+  "Combined PT/YT/LP": {
+   "n": 110,
+   "median": 0.20707470507919534,
+   "p10": 0.17110576315741127,
+   "p90": 0.2392289560597158,
+   "worst": 0.1042996804284928,
+   "best": 0.32584719239426496,
+   "beat_cash": 1.0,
+   "beat_susde": 1.0,
+   "median_maxdd": -0.01888512200081427,
+   "worst_maxdd": -0.09743768605519931
+  }
+ },
+ "recommended": {
+  "family": "pt",
+  "params": {
+   "instruments": [
+    "pt"
+   ],
+   "forecast": "ema30",
+   "blend_w": 1.0,
+   "achievable": "max_cash",
+   "pt_entry": 0.01,
+   "pt_exit": 0.0,
+   "pt_min_carry": 0.02,
+   "min_tvl": 1000000.0,
+   "min_under_tvl": 0.0,
+   "max_frac_market": 0.5,
+   "min_tau_pt": 60
+  },
+  "full_period": {
+   "ret": 0.3805,
+   "cagr": 0.1228,
+   "vol": 0.0304,
+   "sharpe": 3.8291,
+   "maxdd": -0.0177,
+   "days": 1016
+  },
+  "oos_window": {
+   "ret": 0.2162,
+   "cagr": 0.116,
+   "vol": 0.0228,
+   "sharpe": 4.8268,
+   "maxdd": -0.0109,
+   "days": 651
+  },
+  "costs": {
+   "gas": 469.15,
+   "conversion": 78.28,
+   "amm_fee": 56.23,
+   "amm_impact": 7.6,
+   "yt_interest_fee": 0.0
+  },
+  "n_trades": 60
+ },
+ "risk_variants": {
+  "as selected": {
+   "full": {
+    "ret": 0.3805,
+    "cagr": 0.1228,
+    "vol": 0.0304,
+    "sharpe": 3.8291,
+    "maxdd": -0.0177,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2162,
+    "cagr": 0.116,
+    "vol": 0.0228,
+    "sharpe": 4.8268,
+    "maxdd": -0.0109,
+    "days": 651
+   },
+   "trades": 60
+  },
+  "max 25% per market": {
+   "full": {
+    "ret": 0.3089,
+    "cagr": 0.1015,
+    "vol": 0.0321,
+    "sharpe": 3.0274,
+    "maxdd": -0.0388,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.201,
+    "cagr": 0.1081,
+    "vol": 0.0256,
+    "sharpe": 4.0252,
+    "maxdd": -0.0221,
+    "days": 651
+   },
+   "trades": 91
+  },
+  "core underlyings only": {
+   "full": {
+    "ret": 0.3405,
+    "cagr": 0.111,
+    "vol": 0.0283,
+    "sharpe": 3.7353,
+    "maxdd": -0.0213,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2056,
+    "cagr": 0.1105,
+    "vol": 0.0216,
+    "sharpe": 4.864,
+    "maxdd": -0.0158,
+    "days": 651
+   },
+   "trades": 69
+  },
+  "max 25% per market + core only": {
+   "full": {
+    "ret": 0.2892,
+    "cagr": 0.0956,
+    "vol": 0.0289,
+    "sharpe": 3.1772,
+    "maxdd": -0.0285,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.1846,
+    "cagr": 0.0996,
+    "vol": 0.0219,
+    "sharpe": 4.3531,
+    "maxdd": -0.016,
+    "days": 651
+   },
+   "trades": 87
+  }
+ },
+ "stress": {
+  "base": {
+   "full": {
+    "ret": 0.3805,
+    "cagr": 0.1228,
+    "vol": 0.0304,
+    "sharpe": 3.8291,
+    "maxdd": -0.0177,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2162,
+    "cagr": 0.116,
+    "vol": 0.0228,
+    "sharpe": 4.8268,
+    "maxdd": -0.0109,
+    "days": 651
+   },
+   "trades": 60,
+   "gas": 469.15
+  },
+  "gas x2": {
+   "full": {
+    "ret": 0.3078,
+    "cagr": 0.1012,
+    "vol": 0.037,
+    "sharpe": 2.6239,
+    "maxdd": -0.0452,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2042,
+    "cagr": 0.1098,
+    "vol": 0.0294,
+    "sharpe": 3.5603,
+    "maxdd": -0.0221,
+    "days": 651
+   },
+   "trades": 53,
+   "gas": 583.28
+  },
+  "conversion x2": {
+   "full": {
+    "ret": 0.3837,
+    "cagr": 0.1237,
+    "vol": 0.0297,
+    "sharpe": 3.9423,
+    "maxdd": -0.0179,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2163,
+    "cagr": 0.1161,
+    "vol": 0.0223,
+    "sharpe": 4.9275,
+    "maxdd": -0.0108,
+    "days": 651
+   },
+   "trades": 54,
+   "gas": 379.45
+  },
+  "gas x2 + conv x2": {
+   "full": {
+    "ret": 0.3203,
+    "cagr": 0.105,
+    "vol": 0.0407,
+    "sharpe": 2.4755,
+    "maxdd": -0.0461,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2063,
+    "cagr": 0.1109,
+    "vol": 0.029,
+    "sharpe": 3.6385,
+    "maxdd": -0.0219,
+    "days": 651
+   },
+   "trades": 45,
+   "gas": 586.93
+  },
+  "trade on yesterday's signal": {
+   "full": {
+    "ret": 0.38,
+    "cagr": 0.1227,
+    "vol": 0.0305,
+    "sharpe": 3.8132,
+    "maxdd": -0.0177,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2162,
+    "cagr": 0.116,
+    "vol": 0.0228,
+    "sharpe": 4.8283,
+    "maxdd": -0.0109,
+    "days": 651
+   },
+   "trades": 60,
+   "gas": 474.45
+  },
+  "Ethereum only": {
+   "full": {
+    "ret": 0.3632,
+    "cagr": 0.1177,
+    "vol": 0.0309,
+    "sharpe": 3.6153,
+    "maxdd": -0.0258,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2167,
+    "cagr": 0.1162,
+    "vol": 0.0219,
+    "sharpe": 5.042,
+    "maxdd": -0.0105,
+    "days": 651
+   },
+   "trades": 55,
+   "gas": 474.74
+  },
+  "core underlyings only (>$25M on Pendle)": {
+   "full": {
+    "ret": 0.3405,
+    "cagr": 0.111,
+    "vol": 0.0283,
+    "sharpe": 3.7353,
+    "maxdd": -0.0213,
+    "days": 1016
+   },
+   "oos": {
+    "ret": 0.2056,
+    "cagr": 0.1105,
+    "vol": 0.0216,
+    "sharpe": 4.864,
+    "maxdd": -0.0158,
+    "days": 651
+   },
+   "trades": 69,
+   "gas": 373.59
+  }
+ },
+ "capital_sizes": {
+  "2500": {
+   "ret": 0.294,
+   "cagr": 0.097,
+   "vol": 0.0531,
+   "sharpe": 1.7715,
+   "maxdd": -0.0658,
+   "days": 1016,
+   "oos": {
+    "ret": 0.2108,
+    "cagr": 0.1132,
+    "vol": 0.0441,
+    "sharpe": 2.4551,
+    "maxdd": -0.0451,
+    "days": 651
+   },
+   "cost_pct": {
+    "gas": 0.07359,
+    "conversion": 0.01147,
+    "amm_fee": 0.00568,
+    "amm_impact": 0.00099,
+    "yt_interest_fee": 0.0
+   }
+  },
+  "10000": {
+   "ret": 0.3805,
+   "cagr": 0.1228,
+   "vol": 0.0304,
+   "sharpe": 3.8291,
+   "maxdd": -0.0177,
+   "days": 1016,
+   "oos": {
+    "ret": 0.2162,
+    "cagr": 0.116,
+    "vol": 0.0228,
+    "sharpe": 4.8268,
+    "maxdd": -0.0109,
+    "days": 651
+   },
+   "cost_pct": {
+    "gas": 0.04691,
+    "conversion": 0.00783,
+    "amm_fee": 0.00562,
+    "amm_impact": 0.00076,
+    "yt_interest_fee": 0.0
+   }
+  },
+  "50000": {
+   "ret": 0.3774,
+   "cagr": 0.1219,
+   "vol": 0.0227,
+   "sharpe": 5.0819,
+   "maxdd": -0.0139,
+   "days": 1016,
+   "oos": {
+    "ret": 0.22,
+    "cagr": 0.118,
+    "vol": 0.0178,
+    "sharpe": 6.2641,
+    "maxdd": -0.0051,
+    "days": 651
+   },
+   "cost_pct": {
+    "gas": 0.01453,
+    "conversion": 0.00946,
+    "amm_fee": 0.00681,
+    "amm_impact": 0.00434,
+    "yt_interest_fee": 0.0
+   }
+  },
+  "250000": {
+   "ret": 0.351,
+   "cagr": 0.1141,
+   "vol": 0.0229,
+   "sharpe": 4.7237,
+   "maxdd": -0.0119,
+   "days": 1016,
+   "oos": {
+    "ret": 0.1915,
+    "cagr": 0.1032,
+    "vol": 0.0142,
+    "sharpe": 6.9141,
+    "maxdd": -0.0063,
+    "days": 651
+   },
+   "cost_pct": {
+    "gas": 0.00463,
+    "conversion": 0.00797,
+    "amm_fee": 0.00545,
+    "amm_impact": 0.00845,
+    "yt_interest_fee": 0.0
+   }
+  },
+  "1000000": {
+   "ret": 0.2661,
+   "cagr": 0.0885,
+   "vol": 0.0168,
+   "sharpe": 5.0612,
+   "maxdd": -0.0092,
+   "days": 1016,
+   "oos": {
+    "ret": 0.1527,
+    "cagr": 0.0829,
+    "vol": 0.0168,
+    "sharpe": 4.7637,
+    "maxdd": -0.0092,
+    "days": 651
+   },
+   "cost_pct": {
+    "gas": 0.00154,
+    "conversion": 0.00563,
+    "amm_fee": 0.00358,
+    "amm_impact": 0.00439,
+    "yt_interest_fee": 0.0
+   }
+  }
+ },
+ "baselines_full": {
+  "Cash (Aave USDC)": {
+   "ret": 0.1443,
+   "cagr": 0.0496,
+   "vol": 0.0014,
+   "sharpe": 33.6553,
+   "maxdd": 0.0,
+   "days": 1016
+  },
+  "Hold sUSDe": {
+   "ret": 0.2355,
+   "cagr": 0.0789,
+   "vol": 0.0239,
+   "sharpe": 3.1939,
+   "maxdd": -0.0172,
+   "days": 1016
+  }
+ }
+}
