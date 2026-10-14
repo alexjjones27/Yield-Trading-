@@ -1,0 +1,517 @@
+<title>Pendle PT Scanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working scanner. Header with snapshot facts, one control strip,
+   a days-vs-return chart for the overview, then the ranked table with expandable rows. */
+:root {
+  --bg: #f4f6f9;
+  --panel: #ffffff;
+  --ink: #121720;
+  --muted: #5a6474;
+  --line: #e1e5ec;
+  --accent: #2a78d6;
+  --accent-weak: #e6effa;
+  --good: #0ca30c;
+  --good-text: #006300;
+  --warn: #fab219;
+  --warn-text: #7a5200;
+  --bad: #d03b3b;
+  --neutral: #9aa3b2;
+  --pos: #006300;
+  --neg: #b42f2f;
+  --font-display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --panel: #151a21; --ink: #e6eaf0; --muted: #98a2b3; --line: #262d38;
+    --accent: #3987e5; --accent-weak: #172538; --good-text: #3fcf3f; --warn-text: #fab219;
+    --neutral: #6c7686; --pos: #3fcf3f; --neg: #ff7a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --panel: #151a21; --ink: #e6eaf0; --muted: #98a2b3; --line: #262d38;
+  --accent: #3987e5; --accent-weak: #172538; --good-text: #3fcf3f; --warn-text: #fab219;
+  --neutral: #6c7686; --pos: #3fcf3f; --neg: #ff7a7a; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 22px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.wrap > * { min-width: 0; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 0; }
+.num, td.n, .mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top .sub { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; }
+.facts div { display: grid; }
+.facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.facts dd { margin: 0; font-family: var(--font-data); font-size: 13px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; padding: 14px 16px; align-items: flex-end; }
+.ctl { display: grid; gap: 6px; min-width: 0; }
+.ctl > label, .ctl > span.lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 11px; background: transparent; color: var(--ink); border: 0; border-right: 1px solid var(--line); cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.chip-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: var(--accent-weak); }
+.ticket-in { width: 96px; font: inherit; font-family: var(--font-data); padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.toggle input { accent-color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, tr:focus-visible, circle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.summary { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 2px 4px; color: var(--muted); }
+.summary b { color: var(--ink); font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.chart-card { padding: 14px 16px 10px; display: grid; gap: 8px; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+#chart { width: 100%; height: auto; display: block; }
+#chart text { fill: var(--muted); font-family: var(--font-data); font-size: 11px; }
+#chart .grid line { stroke: var(--line); }
+#chart .zero { stroke: var(--muted); }
+#chart .cash { stroke: var(--accent); stroke-dasharray: 4 4; }
+#chart circle { stroke: var(--panel); stroke-width: 2; cursor: pointer; }
+.tip { position: fixed; z-index: 5; pointer-events: none; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-width: 260px; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 980px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; white-space: nowrap; position: sticky; top: 0; background: var(--panel); }
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--ink); }
+th[aria-sort="descending"]::after { content: " ↓"; }
+th[aria-sort="ascending"]::after { content: " ↑"; }
+td.n, th.n { text-align: right; }
+td.n, td.mono { white-space: nowrap; }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover { background: var(--accent-weak); }
+.mkt { display: grid; gap: 2px; }
+.mkt b { font-weight: 600; }
+.mkt small { color: var(--muted); }
+.chain { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; }
+.big { font-size: 15px; font-weight: 500; }
+.pos { color: var(--pos); } .neg { color: var(--neg); }
+.muted { color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.pill .ic { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.pill.pass .ic { background: var(--good); } .pill.pass { color: var(--good-text); }
+.pill.thin .ic { background: var(--warn); } .pill.thin { color: var(--warn-text); }
+.pill.below .ic { background: var(--neutral); } .pill.below { color: var(--muted); }
+.pill.na .ic { background: transparent; border: 1.5px solid var(--neutral); } .pill.na { color: var(--muted); }
+.flags { display: flex; flex-wrap: wrap; gap: 4px; }
+.flag { font-size: 11px; padding: 1px 7px; border-radius: 5px; background: var(--accent-weak); color: var(--ink); white-space: nowrap; }
+.flag.risk { background: transparent; border: 1px solid var(--bad); color: var(--neg); }
+tr.detail td { background: var(--bg); padding: 14px 16px 18px; }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 22px; }
+.kv { display: grid; gap: 1px; min-width: 0; }
+.kv span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.kv b { font-weight: 500; font-family: var(--font-data); font-size: 13px; overflow-wrap: anywhere; }
+.venues { margin-top: 12px; overflow-x: auto; }
+.venues table { min-width: 640px; }
+.venues th { position: static; background: transparent; }
+.links { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.links a { color: var(--accent); }
+.copy { font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.notes .panel { padding: 16px 18px; }
+.notes ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink); }
+.notes li { max-width: 68ch; }
+.notes p { margin: 8px 0 0; color: var(--muted); max-width: 68ch; }
+@media (prefers-reduced-motion: no-preference) { tbody tr.row { transition: background 120ms; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pendle PT Scanner</h1>
+      <p class="sub">Fixed-yield PTs on USD markets maturing within three months, priced from live Pendle router quotes and shown after every cost: swap impact, conversion, exit and gas.</p>
+    </div>
+    <dl class="facts" id="facts"></dl>
+  </header>
+
+  <section class="panel controls" aria-label="Scan settings">
+    <div class="ctl">
+      <span class="lbl" id="lbl-ticket">Ticket</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="seg" role="group" aria-labelledby="lbl-ticket" id="seg-ticket"></div>
+        <input class="ticket-in" id="ticket-in" type="number" min="50" max="100000" step="50" aria-label="Custom ticket in USD">
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lbl" id="lbl-lev">Leverage (PT loop)</span>
+      <div class="seg" role="group" aria-labelledby="lbl-lev" id="seg-lev"></div>
+    </div>
+    <div class="ctl">
+      <span class="lbl" id="lbl-days">Matures within</span>
+      <div class="seg" role="group" aria-labelledby="lbl-days" id="seg-days"></div>
+    </div>
+    <div class="ctl" style="min-width:0">
+      <span class="lbl" id="lbl-chain">Chains</span>
+      <div class="chips" role="group" aria-labelledby="lbl-chain" id="chips-chain"></div>
+    </div>
+    <div class="ctl">
+      <span class="lbl">Filters</span>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <label class="toggle"><input type="checkbox" id="f-small"> Hide pools under $1M</label>
+        <label class="toggle"><input type="checkbox" id="f-pass"> Only "meets rule"</label>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary" id="summary" aria-live="polite"></div>
+
+  <section class="panel chart-card" aria-label="Return against time to maturity">
+    <div class="chart-head">
+      <h2>Return after costs vs. days to maturity</h2>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--good)"></i>Meets backtested rule</span>
+        <span><i class="dot" style="background:var(--warn)"></i>Thin edge</span>
+        <span><i class="dot" style="background:var(--neutral)"></i>Below cash</span>
+        <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="var(--accent)" stroke-dasharray="4 4" stroke-width="1.5"/></svg>Aave USDC</span>
+        <span class="muted">Dot size = pool liquidity</span>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Scatter of all-in APY against days to maturity"></svg>
+  </section>
+
+  <section class="panel" aria-label="Opportunities">
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="panel">
+      <h2>How the numbers are made</h2>
+      <ul>
+        <li><b>Entry:</b> a real Pendle router quote from a USD stable into the PT, aggregator route included, at $100, $1k, $10k and $50k. Other sizes are interpolated between those quotes. A quote is never allowed to beat the pool's mid price.</li>
+        <li><b>At maturity:</b> each PT redeems for one unit of the asset, valued at its current USD price, minus the cost of converting back to a stable and the gas to redeem.</li>
+        <li><b>All-in APY</b> annualises the period return. For very short maturities a small cost moves it a lot, so read the dollar profit too.</li>
+        <li><b>Edge</b> is all-in APY minus the better of the asset's own floating yield and the Aave USDC rate. <b>Meets rule</b> means an edge of at least 1 point and at least 2 points over cash. That is the entry rule from the 2024-2026 backtest.</li>
+        <li><b>Leverage</b> uses the cheapest listed lending market for that PT (7-day average borrow rate), entry quotes at the levered size, loop gas, and holds to maturity. Health factor is approximate.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Before you trade</h2>
+      <ul>
+        <li>This is a snapshot. Rates and liquidity move by the minute, so check the live quote in Pendle before buying.</li>
+        <li>A PT pays its fixed rate only if the asset holds its value until maturity. Several high-yield names are young synthetic dollars, and a depeg or default loses principal.</li>
+        <li>"Points-priced" markets price in points or airdrops that the PT holder gives up. The fixed rate is real, but there is no floating yield to compare it with.</li>
+        <li>Leverage multiplies both outcomes. Morpho PT loops have been liquidated in minutes, so keep the health factor well above 1.</li>
+        <li>Nothing here is financial advice.</li>
+      </ul>
+      <p id="refresh-note"></p>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const SNAP = {"asof":"2026-10-14 10:42 UTC","cash_apy":0.03964345714285714,"eth_gwei":0.088515706,"eth_usd":2501.1611465943733,"markets":[{"name":"siUSD","chain":1,"chain_name":"Ethereum","address":"0x1f34887b270bfaf56cf7973572654874c8ed740e","pt":"0xe3cdf5b8d7aedfc9f768dbdcc334146fae989188","expiry":"2026-10-22","days":7.55,"liquidity":3238426.6692449553,"under_tvl":22014418.910708807,"implied":0.12407906689162451,"underlying":0.060870830264321274,"fee_rate":0.0022700172259710882,"asset_px":1.00056120357041,"points":true,"categories":["stables","points"],"protocol":"InfiniFi","quote_token":"USDC","quotes":[[100,1.0018612081335982],[1000,1.0018612081335982],[10000,1.0018612081335982],[50000,1.0018612081335982]],"mid_ppu":1.0018612081335982,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"SIERRA","chain":1,"chain_name":"Ethereum","address":"0x22fcdf7be34a72bddbf4a6eeeb489b1f29062f0b","pt":"0x17c47b0cedec9b41e639f5ec1a053e9135db2a6d","expiry":"2026-10-22","days":7.55,"liquidity":10979816.241061717,"under_tvl":30912508.55268401,"implied":0.11141934649062368,"underlying":0.059670276951358625,"fee_rate":0.002061573872288003,"asset_px":0.99985031,"points":true,"categories":["stables","points","rwa"],"protocol":"Sierra","quote_token":"USDC","quotes":[[100,1.0023385645839726],[1000,1.0023385645839726],[10000,1.0023385645839726],[50000,1.0023385645839726]],"mid_ppu":1.0023385645839726,"flags":[],"exit_cost":0.0001,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"srUSDe","chain":1,"chain_name":"Ethereum","address":"0x66ec657c59cdcaf171ab43b83da3942758bf8a97","pt":"0x59bc9fae5d62b19d4f8d07d758047acb9ee19d34","expiry":"2026-10-22","days":7.55,"liquidity":3680029.350114704,"under_tvl":15751681.59752766,"implied":0.05599206015786562,"underlying":0.0397415187668162,"fee_rate":0.001072917563744058,"asset_px":0.99962138,"points":true,"categories":["stables","points","ethena","pt-looping"],"protocol":"Strata","quote_token":"USDC","quotes":[[100,1.0015072817606667],[1000,1.0015072817606667],[10000,1.0015072817606667],[50000,1.0015072817606667]],"mid_ppu":1.0015072817606667,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Aave","debt":"USDe","lltv":0.94,"borrow":0.06840189394321683,"borrow7d":0.06837197999319734,"max_lev":10.54257647252049,"liquidity":7893260.877714139,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0x4c9edd5852cd905f086c759e8383e09bff1e68b3&marketName=proto_mainnet_v3"},{"protocol":"Aave","debt":"USDC","lltv":0.92,"borrow":0.04545748353700655,"borrow7d":0.051859641724580276,"max_lev":8.644929976067196,"liquidity":7711690.648883075,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&marketName=proto_mainnet_v3"},{"protocol":"Aave","debt":"USDT","lltv":0.92,"borrow":0.04216613069486174,"borrow7d":0.04362682177926281,"max_lev":8.644929976067196,"liquidity":7711690.648883075,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0xdac17f958d2ee523a2206206994597c13d831ec7&marketName=proto_mainnet_v3"}]},{"name":"jrUSDe","chain":1,"chain_name":"Ethereum","address":"0x78f6927ab0600c445178645f3c64afec85f6dd8a","pt":"0x9786a09cbb2efb23046542576ffd9a235aa3ca07","expiry":"2026-10-22","days":7.55,"liquidity":716389.1213646085,"under_tvl":1910594.7184392354,"implied":0.06796849434156349,"underlying":0.0661201920579948,"fee_rate":0.0012281730649155165,"asset_px":0.99962138,"points":true,"categories":["stables","points","ethena"],"protocol":"Strata","quote_token":"USDC","quotes":[[100,1.0017410456257043],[1000,1.0017410456257043],[10000,1.0017410456257043],[50000,1.0017410456257043]],"mid_ppu":1.0017410456257043,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSDe","chain":9745,"chain_name":"Plasma","address":"0x14c3fc8096cb5b34c2780c6a5977a3d354b9e961","pt":"0xf7fb83435f455bd970f2d9f943f4eece1941b3e9","expiry":"2026-10-22","days":7.55,"liquidity":3388594.939774591,"under_tvl":41111780.908302695,"implied":0.05169234642231668,"underlying":0.049060896047189884,"fee_rate":0.0010241469869538555,"asset_px":0.99961192,"points":true,"categories":["stables","ethena","points","rwa","pt-looping","blue-chips"],"protocol":"Ethena","quote_token":"USDT0","quotes":[[100,1.0014166249509007],[1000,1.001415066920026],[10000,1.001362736231435],[50000,1.0011499643172832]],"mid_ppu":1.0014322004036456,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[{"protocol":"Aave","debt":"USDe","lltv":0.94,"borrow":0.06838251790537582,"borrow7d":0.06838660600909624,"max_lev":10.54257647252049,"liquidity":58210563.45284284,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34&marketName=proto_plasma_v3"},{"protocol":"Aave","debt":"GHO","lltv":0.92,"borrow":0.04226231462814073,"borrow7d":0.046302914171976954,"max_lev":8.644929976067196,"liquidity":5519353.0820438545,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0xb77e872a68c62cfc0dfb02c067ecc3da23b4bbf3&marketName=proto_plasma_v3"},{"protocol":"Aave","debt":"USDT0","lltv":0.92,"borrow":0.04459870321453027,"borrow7d":0.04576653216898145,"max_lev":8.644929976067196,"liquidity":56377588.533977605,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0xf7fb83435f455bd970f2d9f943f4eece1941b3e9&marketName=proto_plasma_v3"}]},{"name":"mixUSDC","chain":1,"chain_name":"Ethereum","address":"0x4b912476356c914b154524c59b5a438a88e99429","pt":"0x45c00ec1a2797b507d3e955b208fb275795da669","expiry":"2026-10-29","days":14.55,"liquidity":52327.79572825981,"under_tvl":52327.89707534708,"implied":0.050000690928578395,"underlying":0.0585496298064494,"fee_rate":0.0009762872702281378,"asset_px":0.99985031,"points":false,"categories":["stables"],"protocol":"Alchemix","quote_token":"USDC","quotes":[[100,1.0020973181459616],[1000,1.002075783],[10000,1.0015040057]],"mid_ppu":1.0020973181459616,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"fxSAVE","chain":1,"chain_name":"Ethereum","address":"0x8308e53f584a7e5f0c581059d9ba971c0bec9454","pt":"0x079c3469143804af5d0d645a878c371dbe8d038e","expiry":"2026-10-29","days":14.55,"liquidity":1533084.1365405729,"under_tvl":4200402.082594521,"implied":0.0872445958740169,"underlying":0.06679393859941207,"fee_rate":0.0017459976098341823,"asset_px":1.0102369652317662,"points":false,"categories":["stables"],"protocol":"f(x) Protocol","quote_token":"USDC","quotes":[[100,0.9931736972584326],[1000,0.9931736972584326],[10000,0.9931736972584326],[50000,0.9931736972584326]],"mid_ppu":0.9931736972584326,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.06278349450648694,"borrow7d":0.04676713899017578,"max_lev":8.892841262783465,"liquidity":103952.18409708318,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xae992849c5f544a32dfdfcc74c0695b73b8732f449727827af6ce3768e968382"}]},{"name":"USDG","chain":196,"chain_name":"X Layer","address":"0xcfb506cb34dd340e80d3df8764182a5187636032","pt":"0x9a09a9e491db3dd8ada5b1b889991ac9ad5fd362","expiry":"2026-10-29","days":14.55,"liquidity":179569.14474502372,"under_tvl":58792259.87603649,"implied":0.03537376693706218,"underlying":0.033,"fee_rate":0.0006953798123032762,"asset_px":0.99999384,"points":false,"categories":["stables","rwa"],"protocol":"Global Dollar","quote_token":"USDC","quotes":[[100,1.001393203083099],[1000,1.001393203083099],[10000,1.001393203083099]],"mid_ppu":1.001393203083099,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[{"protocol":"Aave","debt":"USDG","lltv":0.9559,"borrow":0.04298453908410973,"borrow7d":0.03897031063482831,"max_lev":12.771299196439255,"liquidity":364172.65935972653,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0x9a09a9e491db3dd8ada5b1b889991ac9ad5fd362&marketName=proto_xlayer_v3"},{"protocol":"Aave","debt":"USD\u20ae0","lltv":0.9466,"borrow":0.03983121824260342,"borrow7d":0.04137219001249973,"max_lev":11.365902202465392,"liquidity":13213848.427926252,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.aave.com/reserve-overview/?underlyingAsset=0x9a09a9e491db3dd8ada5b1b889991ac9ad5fd362&marketName=proto_xlayer_v3"}]},{"name":"syzUSD","chain":9745,"chain_name":"Plasma","address":"0x678f22c9d7e9544e4097365e5b1ef2ce2d69809c","pt":"0x5df425b024115ebd1721cc646e5dd0ae688846dd","expiry":"2026-10-29","days":14.55,"liquidity":68328.59281908668,"under_tvl":101617.91953382961,"implied":0.11280386090226413,"underlying":0.07952588652680159,"fee_rate":0.0019820304470037353,"asset_px":0.9985242413104101,"points":true,"categories":["stables","points"],"protocol":"Yuzu Money","quote_token":"USDT0","quotes":[[100,1.0054756559878226],[1000,1.005417166682484],[10000,1.0049409982938666]],"mid_ppu":1.0057550502167993,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[]},{"name":"yzUSD","chain":9745,"chain_name":"Plasma","address":"0xfd1600c4f8d88543a2471e7201f1c703217dc289","pt":"0x3c0eb94b4069aff0d9d76c751a64dcf0130ac0fa","expiry":"2026-10-29","days":14.55,"liquidity":49792.865517540464,"under_tvl":53355.652097485196,"implied":0.09342511318702917,"underlying":0,"fee_rate":0.0017878978907905907,"asset_px":0.9985242413104101,"points":true,"categories":["stables","points"],"protocol":"Yuzu Money","quote_token":"USDT0","quotes":[[100,1.0047834036400554],[1000,1.0047149128830357],[10000,1.004641528797046]],"mid_ppu":1.0050507922029843,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[]},{"name":"apxUSD","chain":1,"chain_name":"Ethereum","address":"0xaf0349fb9b1ba07d34381870c59b560b31412660","pt":"0xaf687b5ecb525ccea96115088999b4ed80c388b6","expiry":"2026-11-05","days":21.55,"liquidity":1460553.582031982,"under_tvl":17358891.44511038,"implied":0.13399944153817045,"underlying":0,"fee_rate":0.002257959742500981,"asset_px":0.9933322858291099,"points":true,"categories":["points","rwa","strc","apyx"],"protocol":"APYX","quote_token":"USDC","quotes":[[100,1.0134437508314573],[1000,1.0131978481229],[10000,1.0129334535306593],[50000,1.011862872604425]],"mid_ppu":1.0142158147766722,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.86,"borrow":0.03612677583658032,"borrow7d":0.04953086170084192,"max_lev":6.031363088057899,"liquidity":587125.8725875177,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x908b037029b5c0671ba3b362eaf289c3199560d1d4632e6cb527cc7240fa006e"}]},{"name":"apyUSD","chain":1,"chain_name":"Ethereum","address":"0xc5f938a8ef5f3bf9e72f5aa094baf5e03f4727d3","pt":"0xb5be35d8ff83d431899b95851cb17a2b4bcef150","expiry":"2026-11-05","days":21.55,"liquidity":19567644.82743593,"under_tvl":62572292.137997985,"implied":0.1617343495480441,"underlying":0.1355748408114128,"fee_rate":0.002875610410699503,"asset_px":0.9933322858291099,"points":true,"categories":["points","rwa","strc","apyx"],"protocol":"APYX","quote_token":"USDC","quotes":[[100,1.0156639931592344],[1000,1.0156639931592344],[10000,1.0156639931592344],[50000,1.0156639931592344]],"mid_ppu":1.0156639931592344,"flags":["dex_discount"],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"apxUSD","lltv":0.915,"borrow":0.10425545928948242,"borrow7d":0.09483316745081091,"max_lev":8.892841262783465,"liquidity":660985.5564589682,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xebd23a871b52e0a8c92bd719f4413600101b69e946cb72923b3a33fb5bc6ec85/pt-apyusd-5nov2026-apxusd#market"},{"protocol":"Morpho","debt":"USDC","lltv":0.86,"borrow":0.06994125598538171,"borrow7d":0.07187433026911758,"max_lev":6.031363088057899,"liquidity":600834.977500662,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xb37c30f34bff11c81ee8400133965f450a5f7c5d81ba2cf5740076f49eabc95c/pt-apyusd-5nov2026-usdc#market"}]},{"name":"USP","chain":1,"chain_name":"Ethereum","address":"0x3ffdf143cbe1e594fba183e2b9035eb027a732ec","pt":"0xc83f11814428b91b7f176ba927c57043e89786cb","expiry":"2026-11-26","days":42.55,"liquidity":35593.42064909712,"under_tvl":192276.71348391185,"implied":0.16899999999999915,"underlying":0.08385720009259479,"fee_rate":0.003210754411181016,"asset_px":0.99985031,"points":true,"categories":["stables","points"],"protocol":"Piku","quote_token":"USDC","quotes":[[100,1.0185237714517992],[1000,1.0185237714517992]],"mid_ppu":1.0185237714517992,"flags":["dex_discount"],"exit_cost":0.0023907244999999966,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSDe","chain":1,"chain_name":"Ethereum","address":"0x47ad2cd1dd15739a7a035b9d3b7828d916fef77e","pt":"0xb195b618ea52b77cb2a58846f452f59f8dfa9390","expiry":"2026-11-26","days":42.55,"liquidity":3814375.8735675397,"under_tvl":25941306.914893497,"implied":0.04850530910157014,"underlying":0.0489442968427638,"fee_rate":0.0009792415961249468,"asset_px":0.99962138,"points":true,"categories":["stables","ethena","points","rwa","fixed-rates","blue-chips"],"protocol":"Ethena","quote_token":"USDC","quotes":[[100,1.0059182585566184],[1000,1.0059182585566184],[10000,1.0059182585566184],[50000,1.0059182585566184]],"mid_ppu":1.0059182585566184,"flags":[],"exit_cost":0.0001,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.03963633019579991,"borrow7d":0.03808583676433054,"max_lev":8.892841262783465,"liquidity":781836.0768995739,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x5613b170ded221c588b6e9637b910f49e5508680ceede207f44aa72e5c46cb05/pt-susde-26nov2026-usdc?tab=market#market"}]},{"name":"superUSDC","chain":1,"chain_name":"Ethereum","address":"0x61703e1ea2887fffd4b5f777bafd6abd7122bcf9","pt":"0xd4e6ea03d2e8bfeb5fa5c03ae9352514b1829218","expiry":"2026-11-26","days":42.55,"liquidity":377688.12772102247,"under_tvl":1075622.503205264,"implied":0.0855109754330523,"underlying":0.08794634097410926,"fee_rate":0.001545455916864391,"asset_px":0.99985031,"points":true,"categories":["stables","points"],"protocol":"Superform","quote_token":"USDC","quotes":[[100,1.00967439],[1000,1.009584642],[10000,1.0094645413],[50000,1.0094473662399999]],"mid_ppu":1.0097629462078357,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSG","chain":1,"chain_name":"Ethereum","address":"0x68b647308f86f8669eaced155a9168769ce72265","pt":"0xe2dbd6bafcd6b1da90483108f0f437addf7bd885","expiry":"2026-11-26","days":42.55,"liquidity":130430.20762283307,"under_tvl":161111.2199787372,"implied":0.17982909818164128,"underlying":0.09773767911487918,"fee_rate":0.003627337006467224,"asset_px":0.99542697222856,"points":true,"categories":["stables","points"],"protocol":"Tangent Finance","quote_token":"USDC","quotes":[[100,1.023077371842609],[1000,1.0228607184646237],[10000,1.0212635818589126]],"mid_ppu":1.024150134060361,"flags":[],"exit_cost":0.0005557454999999822,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSDS","chain":1,"chain_name":"Ethereum","address":"0x9c560ebaf78e596cbcc27411d633a74d628dd7dc","pt":"0xdc169abe56461a2e0c034da431ac2a3ebf596094","expiry":"2026-11-26","days":42.55,"liquidity":4771733.926778015,"under_tvl":90541978.69677022,"implied":0.0496810646345085,"underlying":0.03792380484649516,"fee_rate":0.0009985765669870972,"asset_px":0.99993224,"points":false,"categories":["stables","rwa","skymoney","fixed-rates","yt-leverage"],"protocol":"Sky Protocol","quote_token":"USDC","quotes":[[100,1.0057369395436242],[1000,1.0057369395436242],[10000,1.0057369395436242],[50000,1.0057369395436242]],"mid_ppu":1.0057369395436242,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to DAI","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.04266100167175612,"borrow7d":0.04344225430493059,"max_lev":8.892841262783465,"liquidity":1975158.1691735457,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x22fe4c688161863c73571a2b8db65cc11a4a6bceee4f0dea4aa83e4b784f1bd9"},{"protocol":"Morpho","debt":"USDT","lltv":0.915,"borrow":0.044368690977908444,"borrow7d":0.043920876244040674,"max_lev":8.892841262783465,"liquidity":551116.8429773715,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x0367161b7cb23dfd03747dd3815d1c445b0437b648a6d50346249c6e7b92ff1b/pt-susds-26nov2026-usdt#market"},{"protocol":"Morpho","debt":"USDS","lltv":0.915,"borrow":0.039256610561228346,"borrow7d":0.041763177808153626,"max_lev":8.892841262783465,"liquidity":444620.34756129264,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x9a8dab6de1059e6dc66c34b358764b70effb289e514e237f3161ffb09eaaf24f/pt-susds-26nov2026-usds#market"}]},{"name":"strUSD","chain":1,"chain_name":"Ethereum","address":"0xac028348c46d3455899a2b9b50077c11960eaddb","pt":"0x74299580811e1c3c1a2831db079ba0a8f513998f","expiry":"2026-11-26","days":42.55,"liquidity":4592807.868688357,"under_tvl":6389694.5981294755,"implied":0.11431714301721474,"underlying":0.10241737677983531,"fee_rate":0.002209803243826025,"asset_px":0.99985031,"points":true,"categories":["stables","points","lp-with-no-il"],"protocol":"Tori","quote_token":"USDC","quotes":[[100,1.0128509434315722],[1000,1.0128509434315722],[10000,1.0128509434315722],[50000,1.0128509434315722]],"mid_ppu":1.0128509434315722,"flags":[],"exit_cost":0.00023807549999999011,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.86,"borrow":0.0706698329803724,"borrow7d":0.07887741031675308,"max_lev":6.031363088057899,"liquidity":131057.47895908225,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xf062a110320da27e0e7e7d9e1bdf458dd51e2d2089e55f63ff9fd54f415ce35d/pt-strusd-26nov2026-usdc#market"}]},{"name":"sUSDD","chain":1,"chain_name":"Ethereum","address":"0xbeab098b510f758cd35122ee345957b8eccbb322","pt":"0x459bcab2490843ad1fe1e4feff7f7ea16a14408b","expiry":"2026-11-26","days":42.55,"liquidity":5136171.660810138,"under_tvl":20543538.928574648,"implied":0.05457963126914844,"underlying":0.03999919068401381,"fee_rate":0.001008774368269627,"asset_px":0.99804997,"points":false,"categories":["stables","yt-leverage"],"protocol":"USDD","quote_token":"USDC","quotes":[[100,1.0073092564789452],[1000,1.0072809482872709],[10000,1.0072782880471691],[50000,1.007274341003554]],"mid_ppu":1.0081808027309271,"flags":[],"exit_cost":0.0001,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"trUSD","chain":1,"chain_name":"Ethereum","address":"0xfcf009cb3135da12a6eb1f73f3ee05392a7bc947","pt":"0x7191878f1fe834b28f4d0cead0e4375b814c4abb","expiry":"2026-11-26","days":42.55,"liquidity":1130450.1513399205,"under_tvl":3578929.2767527923,"implied":0.10252916378512555,"underlying":0,"fee_rate":0.0018771359457760983,"asset_px":0.99985031,"points":true,"categories":["stables","points"],"protocol":"Tori","quote_token":"USDC","quotes":[[100,1.0115959053943375],[1000,1.0115959053943375],[10000,1.0115959053943375],[50000,1.0115931021541948]],"mid_ppu":1.0115959053943375,"flags":[],"exit_cost":0.00010567844999997966,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.945,"borrow":0.09880297484410082,"borrow7d":0.09772378926295623,"max_lev":11.997600479904014,"liquidity":192398.015742752,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xd21bbc238918855461d943753ac4c90d103888e5661fd78f3378294c45f7d8df"}]},{"name":"limUSD","chain":999,"chain_name":"HyperEVM","address":"0xfc93d1ada3277e6274c3905db0a2c81ac1252025","pt":"0x6b7cea9d070bbffd8205f256897319139cdef399","expiry":"2026-11-26","days":42.55,"liquidity":1311083.9168150576,"under_tvl":1923583.3375247987,"implied":0.10034869346177522,"underlying":0.06854932773467537,"fee_rate":0.001973171962146525,"asset_px":0.99985031,"points":false,"categories":["stables"],"protocol":"Liminal","quote_token":"USDC","quotes":[[100,1.0113624577257088],[1000,1.0113624577257088],[10000,1.0113090193],[50000,1.01082633836]],"mid_ppu":1.0113624577257088,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[]},{"name":"USDx","chain":1,"chain_name":"Ethereum","address":"0x0bef762d2094ac80821c657dea6783fc43435292","pt":"0xa4b3a2eec53863fe2c9ab0041d480cf964942e84","expiry":"2026-12-03","days":49.55,"liquidity":3355727.882754727,"under_tvl":5549015.464737585,"implied":0.14478008085928273,"underlying":0,"fee_rate":0.002720732318059804,"asset_px":0.99985031,"points":true,"categories":["stables","points","rwa"],"protocol":"Axis","quote_token":"USDC","quotes":[[100,1.0186788822457438],[1000,1.0186788822457438],[10000,1.0186788822457438],[50000,1.0186788822457438]],"mid_ppu":1.0186788822457438,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSDx","chain":1,"chain_name":"Ethereum","address":"0x5e572498e9f83650f0ff24194999bddb4b390928","pt":"0x06ebad062fd573ca31a72d6dfb0f425da2153985","expiry":"2026-12-03","days":49.55,"liquidity":6960195.742649133,"under_tvl":13833574.141635504,"implied":0.1824485337972237,"underlying":0.17178036275763153,"fee_rate":0.0035324937635150544,"asset_px":0.99985031,"points":true,"categories":["stables","points","rwa"],"protocol":"Axis","quote_token":"USDC","quotes":[[100,1.0231661340986977],[1000,1.0231661340986977],[10000,1.0231661340986977],[50000,1.0231661340986977]],"mid_ppu":1.0231661340986977,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"reUSD","chain":1,"chain_name":"Ethereum","address":"0x13285bcbc27f92b47b4edb99d744c07b48c977c0","pt":"0xecfafdc7741323a945a163ed068b5a3c43483957","expiry":"2026-12-10","days":56.55,"liquidity":12405745.906873567,"under_tvl":246426793.82020494,"implied":0.1213721378663235,"underlying":0.07250255770853675,"fee_rate":0.002216131296696844,"asset_px":0.99985031,"points":false,"categories":["stables","rwa","rexyz","pt-looping"],"protocol":"re.xyz","quote_token":"USDC","quotes":[[100,1.01779929],[1000,1.017799334],[10000,1.0178052898],[50000,1.0177970648599999]],"mid_ppu":1.0180598274655572,"flags":[],"exit_cost":0.0002041097500000144,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Euler","debt":"AUSD","lltv":0.94,"borrow":0.1598507462940202,"borrow7d":0.1202765820082241,"max_lev":10.54257647252049,"liquidity":0.44543503534926,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.euler.finance/borrow/0x6876374E4AC054bfCA389109570Ae15b4d25e279/0xD5b786E64eB320940eEfB1570Fa4C82EC54dBf72?network=1&tab=multiply"},{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.08338460613728642,"borrow7d":0.08704336204213141,"max_lev":8.892841262783465,"liquidity":13678586.675028631,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/market/0x1e9d614631a7df0ec07fb05b2c8cb2491575fd1a63a33bf187a6afb295a4fc64"},{"protocol":"Morpho","debt":"USDT","lltv":0.915,"borrow":0.07562618663774069,"borrow7d":0.07755949966189152,"max_lev":8.892841262783465,"liquidity":1110293.7283970306,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x6acd18854e43f93f5a90446004c35c72a68af1ad99f08cb247782ce6457914ca/pt-reusd-10dec2026-usdt#market"}]},{"name":"reUSDe","chain":1,"chain_name":"Ethereum","address":"0x90b70c407f1077f8eb92bf423b44cd92329b737a","pt":"0x2ae4f59e500b6ddeb88c480edf277eda54a00205","expiry":"2026-12-10","days":56.55,"liquidity":4507598.557757499,"under_tvl":16738705.942751415,"implied":0.18703599875726318,"underlying":0.12522615582885144,"fee_rate":0.003399615342895901,"asset_px":0.99962138,"points":false,"categories":["stables","rwa","rexyz","lp-with-no-il"],"protocol":"re.xyz","quote_token":"USDC","quotes":[[100,1.0256005590714354],[1000,1.0240141206770055],[10000,1.0211671484200349],[50000,1.0192394735671035]],"mid_ppu":1.0273111123096121,"flags":[],"exit_cost":0.0036070119500000164,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"WOUSD","chain":1,"chain_name":"Ethereum","address":"0x30ee7618e0ef0682f0f354d6f84be87de6b8878c","pt":"0xeccde3a92f8ad4884a2613d9ef1556103c26728f","expiry":"2026-12-17","days":63.55,"liquidity":126066.54609402738,"under_tvl":146933.40216687307,"implied":0.06531730705388905,"underlying":0.055834281755650306,"fee_rate":0.0012662558903497878,"asset_px":0.9997393266155901,"points":false,"categories":["stables"],"protocol":"Origin ","quote_token":"USDC","quotes":[[100,1.0112168897215799],[1000,1.0111101480854663],[10000,1.0099125069282726]],"mid_ppu":1.0113415347773387,"flags":[],"exit_cost":0.0001,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"USD3","chain":1,"chain_name":"Ethereum","address":"0x4a5067c3ff1abb7449244025b0e37feaf77d8e3e","pt":"0x7f47c3e6b2c00fc4eb4d5ae50d0ab0ab6888eb4d","expiry":"2026-12-17","days":63.55,"liquidity":7191115.308523324,"under_tvl":47350022.18306986,"implied":0.15086686984978015,"underlying":0.06718514238585516,"fee_rate":0.0026439829591216046,"asset_px":0.99985031,"points":false,"categories":["stables","rwa"],"protocol":"3Jane","quote_token":"USDC","quotes":[[100,1.0183844100000001],[1000,1.018419082],[10000,1.0182812902],[50000,1.01744916106]],"mid_ppu":1.0249216263683016,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.86,"borrow":0.07806612418439728,"borrow7d":0.08203361241257967,"max_lev":6.031363088057899,"liquidity":3614465.0620124205,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xf8c5aa31ea6b2a068a9eddb46dd110cae57bf0f12be9583a3f9a818effecba89/pt-usd3-17dec2026-usdc#market"}]},{"name":"sUSD3","chain":1,"chain_name":"Ethereum","address":"0x7972de1c2f9f11f622a188fbae8c0a943880424f","pt":"0x41f45d21502bde8211e94d94ef2eeebcfc48a6ac","expiry":"2026-12-17","days":63.55,"liquidity":1288150.4416015055,"under_tvl":2466126.723497751,"implied":0.2519073136637111,"underlying":0.14101110915545534,"fee_rate":0.004446910799595916,"asset_px":0.99985031,"points":false,"categories":["stables","rwa"],"protocol":"3jane","quote_token":"USDC","quotes":[[100,1.03372842],[1000,1.0330176819999999],[10000,1.0325523176],[50000,1.03153539438]],"mid_ppu":1.040049977004631,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"sUSDf","chain":1,"chain_name":"Ethereum","address":"0x84cda226022b5d6012b418e76b815b967ecc785b","pt":"0x5987440ec8fa7f8976fe5d324e052a3140c9f333","expiry":"2026-12-17","days":63.55,"liquidity":235703.64262701213,"under_tvl":371377.94881285715,"implied":0.043700050117032596,"underlying":0.04518221414421797,"fee_rate":0.0008109384594052749,"asset_px":0.9961174449748571,"points":true,"categories":["stables","points"],"protocol":"Falcon Finance","quote_token":"USDC","quotes":[[100,1.0112881457607998],[1000,1.011188620585738],[10000,1.0110061512696047],[50000,1.010507605789959]],"mid_ppu":1.011402078439807,"flags":[],"exit_cost":0.0001460797500000277,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"yUTY","chain":8453,"chain_name":"Base","address":"0x858539e155d870ecbbd27f5fb9d9521aa39251f1","pt":"0x0112e4d09bc228534eef9d52d5a06d6b94244e8e","expiry":"2026-12-17","days":63.55,"liquidity":112937.26455918036,"under_tvl":113056.3609435209,"implied":0.11724554819122157,"underlying":0,"fee_rate":0.0020893800252839156,"asset_px":0.9998503100001674,"points":true,"categories":["stables","points"],"protocol":"YieldPoint","quote_token":"USDC","quotes":[[100,1.0194163061905794],[1000,1.0191861400779794],[10000,1.0168112206748037]],"mid_ppu":1.0196441180710745,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[]},{"name":"sAID","chain":1,"chain_name":"Ethereum","address":"0x50d746e1c7987396b47b0a95ebd94bccaaf7a2d9","pt":"0xf6e9dd9696bf932864ebbcd34395221a16f3c62b","expiry":"2026-12-31","days":77.55,"liquidity":70300.6861080447,"under_tvl":87121.53665941677,"implied":0.08965870081012262,"underlying":0.09754864308740663,"fee_rate":0.0016441994352573985,"asset_px":1,"points":true,"categories":["stables","points","rwa"],"protocol":"GAIB","quote_token":"USDC","quotes":[[100,1.0183138154699438],[1000,1.0180644720370364],[10000,1.0173730274973687]],"mid_ppu":1.0184115417539603,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"siUSD","chain":1,"chain_name":"Ethereum","address":"0xd44f2630260ff3805d7cb317d4f6740b0044c408","pt":"0x76543ac61ba84c6feeee76c6a918127bf0ca5fd1","expiry":"2027-01-07","days":84.55,"liquidity":11706727.259822374,"under_tvl":22014418.910708807,"implied":0.11009957591679487,"underlying":0.060870830264321274,"fee_rate":0.0021115592289502327,"asset_px":1.00056120357041,"points":true,"categories":["stables","points"],"protocol":"InfiniFi","quote_token":"USDC","quotes":[[100,1.0239166191333333],[1000,1.0239166191333333],[10000,1.0239166191333333],[50000,1.0239166191333333]],"mid_ppu":1.0239166191333333,"flags":[],"exit_cost":0.0001,"exit_note":"redeems straight to USDC","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.86,"borrow":0.06431343649005816,"borrow7d":0.056973730356083205,"max_lev":6.031363088057899,"liquidity":124076.53733626659,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x0c93c623fd2a78a2ffa36b019f74c400c3f3d81fcb22851c88e0c96e510f9689"}]},{"name":"USDat","chain":1,"chain_name":"Ethereum","address":"0x4ccf6deb3d1895373f604b418ff55d8adae8b846","pt":"0xba96292ee7673e3b546cc90db6d97111cd9a314f","expiry":"2027-01-14","days":91.55,"liquidity":2242204.7189054415,"under_tvl":28200757.434936978,"implied":0.08356738400825714,"underlying":0.03,"fee_rate":0.001618341084366648,"asset_px":0.9993803803543001,"points":true,"categories":["stables","points","rwa","strc","saturn","points-market"],"protocol":"Saturn","quote_token":"USDC","quotes":[[100,1.02046802],[1000,1.020718793],[10000,1.020713115],[50000,1.02068296352]],"mid_ppu":1.02096803997533,"flags":[],"exit_cost":0.00010750235000001052,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.08966049187425494,"borrow7d":0.07862760099387149,"max_lev":8.892841262783465,"liquidity":145626.23095973188,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xc7e49dd404825da16988955201ed22ecf8a7b25f0337db8a698d70d7a9f343ea"},{"protocol":"Morpho","debt":"USDT","lltv":0.915,"borrow":0.052515699953509624,"borrow7d":0.0628966291811116,"max_lev":8.892841262783465,"liquidity":2977169.9748523487,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xd8dd3e1d051eee97d1353a113982afac90612c775f393edea45ef7f20caec489"}]},{"name":"sUSDat","chain":1,"chain_name":"Ethereum","address":"0xb6fe0f0811931a38aa97534bac3c147437223e38","pt":"0x0b985c624bb2949432cce77cfd246f01390a0517","expiry":"2027-01-14","days":91.55,"liquidity":1388255.356221602,"under_tvl":6314242.552780368,"implied":0.14204740638912083,"underlying":0.29064030773303773,"fee_rate":0.0027364954360680205,"asset_px":0.9993803803543001,"points":true,"categories":["points","rwa","strc","saturn"],"protocol":"Saturn","quote_token":"USDC","quotes":[[100,1.0345183125151471],[1000,1.0345183125151471],[10000,1.0345183125151471],[50000,1.03161835134]],"mid_ppu":1.0345183125151471,"flags":["dex_discount"],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.02710432322688269,"borrow7d":0.025377879719877088,"max_lev":8.892841262783465,"liquidity":11425.450375466882,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0x7fb1a1db36cc77c1488cd79915ce05ee56c8d256515c20caae926ba74edc4687"}]},{"name":"aptUSD","chain":1,"chain_name":"Ethereum","address":"0xb94f1423b4a95b0115f913daa6c4b8744a74e3b2","pt":"0x87f3a8c7b3db5d342163b078d02deeb1ea56af05","expiry":"2027-01-14","days":91.55,"liquidity":102971.462175748,"under_tvl":103471.10597758344,"implied":0.07071559974093389,"underlying":0.03808976336912262,"fee_rate":0.0013674771308724853,"asset_px":0.9998523097006201,"points":true,"categories":["stables","rwa","points"],"protocol":"APYX","quote_token":"USDC","quotes":[[100,1.0174365963090102],[1000,1.0174365963090102],[10000,1.0174365963090102]],"mid_ppu":1.0174365963090102,"flags":["dex_discount"],"exit_cost":0.00011496654999998412,"exit_note":"measured DEX round trip","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[]},{"name":"srUSDat","chain":1,"chain_name":"Ethereum","address":"0xdf2e3e0250f679d6284a39a0c1a16a850a9d7aa6","pt":"0x2c3e7c0fab3d546ea0715d2a96fbdf598711a062","expiry":"2027-01-14","days":91.55,"liquidity":218915.7864390652,"under_tvl":910114.8689867873,"implied":0.10680231885841818,"underlying":0.08114200530797455,"fee_rate":0.0019808837259154277,"asset_px":0.9993803803543001,"points":true,"categories":["strc","points","rwa","strata","saturn","lo-incentives"],"protocol":"Strata","quote_token":"USDC","quotes":[[100,1.02319804],[1000,1.0231433479999998],[10000,1.0225048696],[50000,1.02221023886]],"mid_ppu":1.026415835433081,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.13416357909460572,"redeem":0.09962642011975673,"loop_in":0.2723122149940017,"loop_out":0.21475028336925336},"loop":[{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.12234051119104483,"borrow7d":0.20148716685267587,"max_lev":8.892841262783465,"liquidity":1999.71362,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/ethereum/variable/0xdf9ba95a4db27532ded6d5ca5c6085c95bf1cdc748aeae3d933fbca1b579c9a8"}]},{"name":"USDat","chain":56,"chain_name":"BNB Chain","address":"0x48fd92fd80e0256d455e82b7709b265fe44da9d2","pt":"0x476aa4205b4eac187011fd8fa07e53d445f213fc","expiry":"2027-01-14","days":91.55,"liquidity":43116.899870171124,"under_tvl":104565.41154043708,"implied":0.06206616829892342,"underlying":0,"fee_rate":0.0013278084282626335,"asset_px":0.9993803803543001,"points":true,"categories":["stables","points","rwa","strc","saturn"],"protocol":"Saturn","quote_token":"USDC","quotes":[[100,1.0149544],[1000,1.014304781],[10000,1.0063672303]],"mid_ppu":1.0158482145421848,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[]},{"name":"USDat","chain":143,"chain_name":"Monad","address":"0x88c5d8a908834e44b421cb67aec9a931782f9538","pt":"0xa08a69ab9dd3b04d0992bc7afb2c0b907bbdc147","expiry":"2027-01-14","days":91.55,"liquidity":1675063.8503622613,"under_tvl":51627026.812069885,"implied":0.0911285311491512,"underlying":0.03,"fee_rate":0.0016878201061572007,"asset_px":0.9993803803543001,"points":true,"categories":["stables","points","rwa","strc","saturn"],"protocol":"Saturn","quote_token":"USDC","quotes":[[100,1.02193127],[1000,1.0218915560000001],[10000,1.0219182],[50000,1.02184985538]],"mid_ppu":1.0227503943929166,"flags":[],"exit_cost":0.0015,"exit_note":"estimate (no measured route)","gas":{"buy":0.05,"redeem":0.05,"loop_in":0.15,"loop_out":0.15},"loop":[{"protocol":"Euler","debt":"USDC","lltv":0.915,"borrow":0.05429163011672956,"borrow7d":0.07536203092121473,"max_lev":8.644929976067196,"liquidity":1005177.6251683658,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.euler.finance/borrow/0xb9bb31debCE3F6a7a7d916AeF2E49810c9685CEe/0x06047833d9aAC144f7F4e9B8234D2c7DDA1a8BAf?network=143"},{"protocol":"Morpho","debt":"USDC","lltv":0.915,"borrow":0.07187217491740797,"borrow7d":0.08457476994888874,"max_lev":8.892841262783465,"liquidity":2495233.9896159796,"pt_oracle":"linear","debt_oracle":"marketPrice","url":"https://app.morpho.org/monad/variable/0x093bd94086b08a013c96dc0776ebf663e9300e742a2c14479211cc35da6c3439/pt-usdat-14jan2027-usdc#market"}]}]};
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const fmtUsd = (x, d = 0) => (x < 0 ? "−$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtPct = (x, d = 1) => (x == null || !isFinite(x)) ? "–" : (x < 0 ? "−" : "") + Math.abs(x * 100).toFixed(d) + "%";
+  const fmtPts = (x) => (x == null || !isFinite(x)) ? "–" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + " pts";
+  const fmtM = (x) => x >= 1e6 ? "$" + (x / 1e6).toFixed(x >= 1e7 ? 0 : 1) + "M" : "$" + Math.round(x / 1e3) + "k";
+  const ann = (ret, days) => ret <= -1 ? -1 : Math.pow(1 + ret, 365 / Math.max(days, 0.5)) - 1;
+  const CHAIN_SLUG = { 1: "ethereum", 42161: "arbitrum", 8453: "base", 56: "bnbchain", 146: "sonic", 999: "hyperevm", 9745: "plasma", 143: "monad", 196: "xlayer", 5000: "mantle", 80094: "berachain", 10: "optimism" };
+
+  const chains = [...new Set(SNAP.markets.map((m) => m.chain_name))];
+  const defaults = { ticket: 1000, lev: 1, maxDays: 60, chains: chains, hideSmall: false, onlyPass: false, sort: "profit", dir: -1 };
+  let st = Object.assign({}, defaults);
+  try { const s = JSON.parse(localStorage.getItem("pt-scanner-state") || "null"); if (s) st = Object.assign(st, s, { chains: (s.chains || chains).filter((c) => chains.includes(c)) }); } catch (e) {}
+  if (!st.chains.length) st.chains = chains;
+  const save = () => { try { localStorage.setItem("pt-scanner-state", JSON.stringify(st)); } catch (e) {} };
+  const open = new Set();
+
+  function ppuAt(q, N) {
+    if (N <= q[0][0]) return { v: q[0][1], beyond: false };
+    for (let i = 1; i < q.length; i++) {
+      if (N <= q[i][0]) {
+        const [s0, v0] = q[i - 1], [s1, v1] = q[i];
+        const t = (Math.log(N) - Math.log(s0)) / (Math.log(s1) - Math.log(s0));
+        return { v: v0 + (v1 - v0) * t, beyond: false };
+      }
+    }
+    const n = q.length;
+    if (n >= 2) {
+      const [s0, v0] = q[n - 2], [s1, v1] = q[n - 1];
+      const slope = (v1 - v0) / (Math.log(s1) - Math.log(s0));
+      return { v: Math.min(v1, v1 + slope * (Math.log(N) - Math.log(s1))), beyond: true };
+    }
+    return { v: q[n - 1][1], beyond: true };
+  }
+
+  function evaluate(m) {
+    const T = st.ticket, L = st.lev, d = m.days;
+    const p1 = ppuAt(m.quotes, T);
+    const units1 = T * p1.v;
+    const fixed = ann(units1 * m.asset_px / T - 1, d);
+    const val1 = units1 * m.asset_px * (1 - m.exit_cost);
+    const gas1 = m.gas.buy + m.gas.redeem;
+    const prof1 = val1 - T - gas1;
+    const apy1 = ann(prof1 / T, d);
+    const alt = Math.max(m.underlying || 0, SNAP.cash_apy);
+    const edge = apy1 - alt, carry = apy1 - SNAP.cash_apy;
+    const signal = carry <= 0 ? "below" : (edge >= 0.01 && carry >= 0.02 ? "pass" : "thin");
+    const impact = 1 - p1.v / m.mid_ppu;
+    const r = { m, units1, fixed, prof1, apy1, edge, carry, signal, gas1, impact, beyond: p1.beyond };
+    if (L === 1) return Object.assign(r, { profit: prof1, apy: apy1, ret: prof1 / T, levNote: null });
+    const opts = (m.loop || []).filter((o) => o.borrow7d != null && o.max_lev >= L && (o.liquidity || 0) >= (L - 1) * T * 1.2);
+    if (!opts.length) {
+      const why = (m.loop || []).length ? "No listed lending market supports " + L + "x at this size" : "No lending market accepts this PT";
+      return Object.assign(r, { profit: null, apy: null, ret: null, levNote: why });
+    }
+    opts.sort((a, b) => a.borrow7d - b.borrow7d);
+    const o = opts[0];
+    const N = L * T, pN = ppuAt(m.quotes, N);
+    const units = N * pN.v, debt = (L - 1) * T;
+    const debtEnd = debt * Math.pow(1 + o.borrow7d, d / 365);
+    const val = units * m.asset_px * (1 - m.exit_cost);
+    const gasL = m.gas.loop_in + m.gas.loop_out;
+    const profit = val - debtEnd - T - gasL;
+    const hf = (units / m.mid_ppu) * o.lltv / debt;
+    return Object.assign(r, { profit, apy: ann(profit / T, d), ret: profit / T, venue: o, hf, spread: fixed - o.borrow7d, gasL, beyond: pN.beyond, levNote: hf < 1.05 ? "Health factor " + hf.toFixed(2) + " at entry: too close to liquidation" : null });
+  }
+
+  function flagsFor(r) {
+    const m = r.m, f = [];
+    if (m.points || !(m.underlying > 0)) f.push(["Points-priced", "No floating yield to compare; the price includes points or airdrops the PT holder gives up", false]);
+    if (m.liquidity < 1e6) f.push(["Small pool", "Pool liquidity " + fmtM(m.liquidity), true]);
+    if (m.under_tvl < 25e6) f.push(["Small issuer", "Under $25M of this asset on Pendle", true]);
+    if (m.asset_px < 0.995) f.push(["$" + m.asset_px.toFixed(3), "Asset trades below $1", true]);
+    if ((m.flags || []).includes("dex_discount")) f.push(["DEX discount", "The asset is cheaper on DEXs than its reference price; returns are capped at the pool's mid price", true]);
+    if (m.days < 7) f.push(["Under a week", "Fixed costs dominate very short holds", false]);
+    if (r.beyond) f.push(["Above largest quote", "Ticket is bigger than the largest live quote; impact may be higher", true]);
+    return f;
+  }
+
+  const COLS = [
+    { key: "name", label: "Market", sort: (r) => r.m.name.toLowerCase() },
+    { key: "days", label: "Matures", sort: (r) => r.m.days },
+    { key: "profit", label: "Profit on ticket", n: true, sort: (r) => r.profit ?? -1e9 },
+    { key: "apy", label: "All-in APY", n: true, sort: (r) => r.apy ?? -1e9 },
+    { key: "implied", label: "Implied", n: true, sort: (r) => r.m.implied },
+    { key: "underlying", label: "Floating", n: true, sort: (r) => r.m.underlying || 0 },
+    { key: "edge", label: "Edge", n: true, sort: (r) => r.edge },
+    { key: "liq", label: "Pool", n: true, sort: (r) => r.m.liquidity },
+    { key: "signal", label: "Signal", sort: (r) => ({ pass: 3, thin: 2, below: 1 })[r.signal] },
+    { key: "flags", label: "Flags" },
+  ];
+
+  function renderControls() {
+    const seg = (el, items, cur, on) => {
+      el.innerHTML = "";
+      items.forEach(([v, label]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", String(v === cur));
+        b.addEventListener("click", () => on(v));
+        el.appendChild(b);
+      });
+    };
+    seg($("seg-ticket"), [[100, "$100"], [1000, "$1k"], [10000, "$10k"]], st.ticket, (v) => { st.ticket = v; update(); });
+    seg($("seg-lev"), [[1, "1x"], [2, "2x"], [3, "3x"], [5, "5x"]], st.lev, (v) => { st.lev = v; update(); });
+    seg($("seg-days"), [[30, "30d"], [45, "45d"], [60, "60d"], [92, "90d"]], st.maxDays, (v) => { st.maxDays = v; update(); });
+    $("ticket-in").value = st.ticket;
+    const cc = $("chips-chain"); cc.innerHTML = "";
+    chains.forEach((c) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip-btn"; b.textContent = c;
+      b.setAttribute("aria-pressed", String(st.chains.includes(c)));
+      b.addEventListener("click", () => {
+        st.chains = st.chains.includes(c) ? st.chains.filter((x) => x !== c) : st.chains.concat(c);
+        if (!st.chains.length) st.chains = chains.slice();
+        update();
+      });
+      cc.appendChild(b);
+    });
+    $("f-small").checked = st.hideSmall; $("f-pass").checked = st.onlyPass;
+  }
+
+  function rows() {
+    let rs = SNAP.markets.filter((m) => m.days <= st.maxDays && st.chains.includes(m.chain_name) && (!st.hideSmall || m.liquidity >= 1e6)).map(evaluate);
+    if (st.onlyPass) rs = rs.filter((r) => r.signal === "pass" && (st.lev === 1 || r.profit != null));
+    const col = COLS.find((c) => c.key === st.sort) || COLS[2];
+    rs.sort((a, b) => { const x = col.sort(a), y = col.sort(b); return (x > y ? 1 : x < y ? -1 : 0) * st.dir; });
+    return rs;
+  }
+
+  function renderFacts() {
+    const f = [["Snapshot", SNAP.asof], ["Aave USDC (7d)", fmtPct(SNAP.cash_apy, 2)], ["Ethereum gas", SNAP.eth_gwei.toFixed(2) + " gwei"], ["Markets priced", String(SNAP.markets.length)]];
+    $("facts").innerHTML = f.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+    $("refresh-note").textContent = "Snapshot taken " + SNAP.asof + ". Ask Claude to re-run the scan for fresh quotes.";
+  }
+
+  function renderSummary(rs) {
+    const ok = rs.filter((r) => r.profit != null);
+    const pass = rs.filter((r) => r.signal === "pass").length;
+    const best = ok.slice().sort((a, b) => b.profit - a.profit)[0];
+    const cashOn = st.ticket * (Math.pow(1 + SNAP.cash_apy, st.maxDays / 365) - 1);
+    const parts = [
+      `<span><b>${rs.length}</b> markets maturing within ${st.maxDays === 92 ? 90 : st.maxDays} days</span>`,
+      `<span><b>${pass}</b> meet the backtested rule</span>`,
+      best ? `<span>Best profit on ${fmtUsd(st.ticket)}${st.lev > 1 ? " at " + st.lev + "x" : ""}: <b>${fmtUsd(best.profit, 2)}</b> (${best.m.name}, ${Math.round(best.m.days)}d)</span>` : "",
+      `<span>Aave USDC would earn about <b>${fmtUsd(cashOn, 2)}</b> over ${st.maxDays === 92 ? 90 : st.maxDays} days</span>`,
+    ];
+    $("summary").innerHTML = parts.join("");
+  }
+
+  function renderChart(rs) {
+    const svg = $("chart"), W = 760, H = 300, ml = 48, mr = 14, mt = 12, mb = 32;
+    const pts = rs.filter((r) => r.apy != null);
+    const xMax = st.maxDays === 92 ? 90 : st.maxDays;
+    let yMin = Math.min(-0.02, ...pts.map((r) => r.apy)), yMax = Math.max(0.2, ...pts.map((r) => r.apy), SNAP.cash_apy);
+    yMin = Math.max(yMin, -0.3); yMax = Math.min(yMax, st.lev > 1 ? 1.5 : 0.6);
+    const step = yMax - yMin > 0.6 ? 0.2 : yMax - yMin > 0.3 ? 0.1 : 0.05;
+    yMin = Math.floor(yMin / step) * step; yMax = Math.ceil(yMax / step) * step;
+    const x = (v) => ml + (Math.min(v, xMax) / xMax) * (W - ml - mr);
+    const y = (v) => mt + (1 - (Math.max(Math.min(v, yMax), yMin) - yMin) / (yMax - yMin)) * (H - mt - mb);
+    let g = '<g class="grid">';
+    for (let v = yMin; v <= yMax + 1e-9; v += step) {
+      g += `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+    }
+    const xs = xMax <= 30 ? 5 : 15;
+    for (let v = 0; v <= xMax; v += xs) g += `<text x="${x(v)}" y="${H - 10}" text-anchor="middle">${v}d</text>`;
+    g += "</g>";
+    g += `<line class="zero" x1="${ml}" x2="${W - mr}" y1="${y(0)}" y2="${y(0)}"/>`;
+    g += `<line class="cash" x1="${ml}" x2="${W - mr}" y1="${y(SNAP.cash_apy)}" y2="${y(SNAP.cash_apy)}"/>`;
+    const color = { pass: "var(--good)", thin: "var(--warn)", below: "var(--neutral)" };
+    const sorted = pts.slice().sort((a, b) => b.m.liquidity - a.m.liquidity);
+    sorted.forEach((r) => {
+      const rad = Math.max(4, Math.min(13, 3 + Math.sqrt(r.m.liquidity / 1e6) * 2.4));
+      const i = SNAP.markets.indexOf(r.m);
+      g += `<circle tabindex="0" data-i="${i}" cx="${x(r.m.days)}" cy="${y(r.apy)}" r="${rad}" fill="${color[r.signal]}"><title>${r.m.name} ${r.m.chain_name}: ${fmtPct(r.apy)}</title></circle>`;
+    });
+    if (!pts.length) g += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">No markets match these settings</text>`;
+    svg.innerHTML = g;
+    svg.querySelectorAll("circle").forEach((c) => {
+      const r = rs.find((z) => SNAP.markets.indexOf(z.m) === +c.dataset.i);
+      const show = (ev) => {
+        const t = $("tip");
+        t.innerHTML = `<b>${r.m.name}</b> · ${r.m.chain_name}<br>Matures ${r.m.expiry} (${Math.round(r.m.days)}d)<br>All-in ${fmtPct(r.apy)} · profit ${fmtUsd(r.profit, 2)} on ${fmtUsd(st.ticket)}<br>Pool ${fmtM(r.m.liquidity)}`;
+        t.hidden = false;
+        const bx = ev.clientX ?? c.getBoundingClientRect().left, by = ev.clientY ?? c.getBoundingClientRect().top;
+        t.style.left = Math.min(bx + 14, window.innerWidth - 270) + "px"; t.style.top = (by + 14) + "px";
+      };
+      c.addEventListener("mousemove", show); c.addEventListener("focus", show);
+      c.addEventListener("mouseleave", () => { $("tip").hidden = true; }); c.addEventListener("blur", () => { $("tip").hidden = true; });
+      c.addEventListener("click", () => { open.add(+c.dataset.i); renderTable(rows()); const tr = document.querySelector(`tr.row[data-i="${c.dataset.i}"]`); if (tr) tr.scrollIntoView({ block: "center", behavior: "smooth" }); });
+    });
+  }
+
+  function renderHead() {
+    $("thead").innerHTML = COLS.map((c) => {
+      const s = c.key === "flags" ? "" : ` class="sortable${c.n ? " n" : ""}" tabindex="0"` + (st.sort === c.key ? ` aria-sort="${st.dir < 0 ? "descending" : "ascending"}"` : "");
+      const label = c.key === "profit" ? `Profit on ${fmtUsd(st.ticket)}${st.lev > 1 ? " · " + st.lev + "x" : ""}` : c.label;
+      return `<th data-k="${c.key}"${s}>${label}</th>`;
+    }).join("");
+    $("thead").querySelectorAll("th.sortable").forEach((th) => {
+      const go = () => { const k = th.dataset.k; if (st.sort === k) st.dir *= -1; else { st.sort = k; st.dir = k === "name" || k === "days" ? 1 : -1; } update(); };
+      th.addEventListener("click", go); th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+  }
+
+  function signalPill(r) {
+    const lab = { pass: "Meets rule", thin: "Thin edge", below: "Below cash" }[r.signal];
+    return `<span class="pill ${r.signal}"><i class="ic"></i>${lab}</span>`;
+  }
+
+  function detailHtml(r) {
+    const m = r.m, kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+    let h = '<div class="dgrid">';
+    h += kv("PT received for " + fmtUsd(st.ticket), r.units1.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " PT");
+    h += kv("Quoted from", m.quote_token + " via Pendle router");
+    h += kv("Fixed APY after entry", fmtPct(r.fixed, 2));
+    h += kv("Entry cost vs mid", fmtPct(r.impact, 3));
+    h += kv("Exit to stable", fmtPct(m.exit_cost, 2) + " · " + m.exit_note);
+    h += kv("Gas (buy + redeem)", fmtUsd(r.gas1, 2));
+    h += kv("Asset price", "$" + m.asset_px.toFixed(4));
+    h += kv("Issuer TVL on Pendle", fmtM(m.under_tvl));
+    h += kv("Quoted sizes", m.quotes.map((q) => fmtUsd(q[0])).join(", "));
+    if (st.lev > 1) {
+      if (r.venue) {
+        h += kv("Lending market", r.venue.protocol + " · borrow " + r.venue.debt);
+        h += kv("Borrow APY (7d avg)", fmtPct(r.venue.borrow7d, 2));
+        h += kv("Fixed minus borrow", fmtPts(r.spread));
+        h += kv("Health factor at entry (approx.)", r.hf.toFixed(2) + " · LLTV " + fmtPct(r.venue.lltv, 1));
+        h += kv("PT oracle", r.venue.pt_oracle || "unknown");
+        h += kv("Loop gas (in + out)", fmtUsd(r.gasL, 2));
+      } else h += kv("Leverage", r.levNote);
+    }
+    h += "</div>";
+    if ((m.loop || []).length) {
+      h += '<div class="venues"><table><thead><tr><th>Lending market</th><th>Borrow</th><th class="n">Borrow 7d</th><th class="n">LLTV</th><th class="n">Max lev.</th><th class="n">Liquidity</th><th>PT oracle</th></tr></thead><tbody>';
+      m.loop.slice().sort((a, b) => (a.borrow7d ?? 9) - (b.borrow7d ?? 9)).forEach((o) => {
+        h += `<tr><td>${o.protocol}</td><td>${o.debt}</td><td class="n">${fmtPct(o.borrow7d, 2)}</td><td class="n">${fmtPct(o.lltv, 1)}</td><td class="n">${(o.max_lev || 0).toFixed(1)}x</td><td class="n">${fmtM(o.liquidity || 0)}</td><td>${o.pt_oracle || "unknown"}</td></tr>`;
+      });
+      h += "</tbody></table></div>";
+    }
+    const slug = CHAIN_SLUG[m.chain] || "ethereum";
+    h += `<div class="links"><a href="https://app.pendle.finance/trade/markets/${m.address}/swap?view=pt&chain=${slug}" target="_blank" rel="noopener">Open this market in Pendle</a><span class="muted mono">${m.address}</span><button class="copy" type="button" data-copy="${m.address}">Copy address</button></div>`;
+    return h;
+  }
+
+  function renderTable(rs) {
+    const tb = $("tbody");
+    if (!rs.length) { tb.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No markets match these settings. Widen the maturity window or turn off a filter.</td></tr>`; return; }
+    let h = "";
+    rs.forEach((r) => {
+      const m = r.m, i = SNAP.markets.indexOf(m);
+      const prof = r.profit == null ? `<span class="muted">${r.levNote || "–"}</span>` : `<span class="big ${r.profit >= 0 ? "pos" : "neg"}">${fmtUsd(r.profit, 2)}</span><br><small class="muted">${fmtPct(r.ret, 2)} over ${Math.round(m.days)}d</small>`;
+      const apy = r.apy == null ? "–" : `<span class="big">${fmtPct(r.apy)}</span>` + (st.lev > 1 && r.levNote ? `<br><small class="neg">${r.levNote}</small>` : "");
+      const flags = flagsFor(r).map(([t, tip, risk]) => `<span class="flag${risk ? " risk" : ""}" title="${tip}">${t}</span>`).join("");
+      h += `<tr class="row" tabindex="0" data-i="${i}" aria-expanded="${open.has(i)}">
+        <td><div class="mkt"><b>${m.name}<span class="chain">${m.chain_name}</span></b><small>${m.protocol || ""}</small></div></td>
+        <td class="mono">${m.expiry}<br><small class="muted">in ${Math.round(m.days)}d</small></td>
+        <td class="n">${prof}</td>
+        <td class="n">${apy}</td>
+        <td class="n">${fmtPct(m.implied)}</td>
+        <td class="n">${m.underlying > 0 ? fmtPct(m.underlying) : '<span class="muted">none</span>'}</td>
+        <td class="n ${r.edge >= 0 ? "pos" : "neg"}">${fmtPts(r.edge)}</td>
+        <td class="n">${fmtM(m.liquidity)}</td>
+        <td>${signalPill(r)}</td>
+        <td><div class="flags">${flags}</div></td></tr>`;
+      if (open.has(i)) h += `<tr class="detail"><td colspan="${COLS.length}">${detailHtml(r)}</td></tr>`;
+    });
+    tb.innerHTML = h;
+    tb.querySelectorAll("tr.row").forEach((tr) => {
+      const tog = () => { const i = +tr.dataset.i; open.has(i) ? open.delete(i) : open.add(i); renderTable(rows()); const n = document.querySelector(`tr.row[data-i="${i}"]`); if (n) n.focus(); };
+      tr.addEventListener("click", tog);
+      tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tog(); } });
+    });
+    tb.querySelectorAll("button.copy").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const done = () => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy address"; }, 1400); };
+      try { navigator.clipboard.writeText(b.dataset.copy).then(done, () => selectText(b)); } catch (err) { selectText(b); }
+    }));
+  }
+  function selectText(b) { const s = b.previousElementSibling; const rg = document.createRange(); rg.selectNodeContents(s); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); }
+
+  function update() {
+    save(); renderControls(); renderHead();
+    const rs = rows();
+    renderSummary(rs); renderChart(rs); renderTable(rs);
+  }
+
+  $("ticket-in").addEventListener("change", (e) => { const v = Math.max(50, Math.min(100000, +e.target.value || 1000)); st.ticket = v; update(); });
+  $("f-small").addEventListener("change", (e) => { st.hideSmall = e.target.checked; update(); });
+  $("f-pass").addEventListener("change", (e) => { st.onlyPass = e.target.checked; update(); });
+  renderFacts();
+  update();
+})();
+</script>

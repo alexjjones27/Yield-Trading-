@@ -1,0 +1,517 @@
+<title>Pendle PT Scanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working scanner. Header with snapshot facts, one control strip,
+   a days-vs-return chart for the overview, then the ranked table with expandable rows. */
+:root {
+  --bg: #f4f6f9;
+  --panel: #ffffff;
+  --ink: #121720;
+  --muted: #5a6474;
+  --line: #e1e5ec;
+  --accent: #2a78d6;
+  --accent-weak: #e6effa;
+  --good: #0ca30c;
+  --good-text: #006300;
+  --warn: #fab219;
+  --warn-text: #7a5200;
+  --bad: #d03b3b;
+  --neutral: #9aa3b2;
+  --pos: #006300;
+  --neg: #b42f2f;
+  --font-display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --panel: #151a21; --ink: #e6eaf0; --muted: #98a2b3; --line: #262d38;
+    --accent: #3987e5; --accent-weak: #172538; --good-text: #3fcf3f; --warn-text: #fab219;
+    --neutral: #6c7686; --pos: #3fcf3f; --neg: #ff7a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --panel: #151a21; --ink: #e6eaf0; --muted: #98a2b3; --line: #262d38;
+  --accent: #3987e5; --accent-weak: #172538; --good-text: #3fcf3f; --warn-text: #fab219;
+  --neutral: #6c7686; --pos: #3fcf3f; --neg: #ff7a7a; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 22px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.wrap > * { min-width: 0; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 0; }
+.num, td.n, .mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top .sub { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; }
+.facts div { display: grid; }
+.facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.facts dd { margin: 0; font-family: var(--font-data); font-size: 13px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; padding: 14px 16px; align-items: flex-end; }
+.ctl { display: grid; gap: 6px; min-width: 0; }
+.ctl > label, .ctl > span.lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 11px; background: transparent; color: var(--ink); border: 0; border-right: 1px solid var(--line); cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.chip-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: var(--accent-weak); }
+.ticket-in { width: 96px; font: inherit; font-family: var(--font-data); padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.toggle input { accent-color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, tr:focus-visible, circle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.summary { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 2px 4px; color: var(--muted); }
+.summary b { color: var(--ink); font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.chart-card { padding: 14px 16px 10px; display: grid; gap: 8px; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+#chart { width: 100%; height: auto; display: block; }
+#chart text { fill: var(--muted); font-family: var(--font-data); font-size: 11px; }
+#chart .grid line { stroke: var(--line); }
+#chart .zero { stroke: var(--muted); }
+#chart .cash { stroke: var(--accent); stroke-dasharray: 4 4; }
+#chart circle { stroke: var(--panel); stroke-width: 2; cursor: pointer; }
+.tip { position: fixed; z-index: 5; pointer-events: none; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-width: 260px; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 980px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; white-space: nowrap; position: sticky; top: 0; background: var(--panel); }
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--ink); }
+th[aria-sort="descending"]::after { content: " ↓"; }
+th[aria-sort="ascending"]::after { content: " ↑"; }
+td.n, th.n { text-align: right; }
+td.n, td.mono { white-space: nowrap; }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover { background: var(--accent-weak); }
+.mkt { display: grid; gap: 2px; }
+.mkt b { font-weight: 600; }
+.mkt small { color: var(--muted); }
+.chain { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; }
+.big { font-size: 15px; font-weight: 500; }
+.pos { color: var(--pos); } .neg { color: var(--neg); }
+.muted { color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.pill .ic { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.pill.pass .ic { background: var(--good); } .pill.pass { color: var(--good-text); }
+.pill.thin .ic { background: var(--warn); } .pill.thin { color: var(--warn-text); }
+.pill.below .ic { background: var(--neutral); } .pill.below { color: var(--muted); }
+.pill.na .ic { background: transparent; border: 1.5px solid var(--neutral); } .pill.na { color: var(--muted); }
+.flags { display: flex; flex-wrap: wrap; gap: 4px; }
+.flag { font-size: 11px; padding: 1px 7px; border-radius: 5px; background: var(--accent-weak); color: var(--ink); white-space: nowrap; }
+.flag.risk { background: transparent; border: 1px solid var(--bad); color: var(--neg); }
+tr.detail td { background: var(--bg); padding: 14px 16px 18px; }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 22px; }
+.kv { display: grid; gap: 1px; min-width: 0; }
+.kv span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.kv b { font-weight: 500; font-family: var(--font-data); font-size: 13px; overflow-wrap: anywhere; }
+.venues { margin-top: 12px; overflow-x: auto; }
+.venues table { min-width: 640px; }
+.venues th { position: static; background: transparent; }
+.links { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.links a { color: var(--accent); }
+.copy { font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.notes .panel { padding: 16px 18px; }
+.notes ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink); }
+.notes li { max-width: 68ch; }
+.notes p { margin: 8px 0 0; color: var(--muted); max-width: 68ch; }
+@media (prefers-reduced-motion: no-preference) { tbody tr.row { transition: background 120ms; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pendle PT Scanner</h1>
+      <p class="sub">Fixed-yield PTs on USD markets maturing within three months, priced from live Pendle router quotes and shown after every cost: swap impact, conversion, exit and gas.</p>
+    </div>
+    <dl class="facts" id="facts"></dl>
+  </header>
+
+  <section class="panel controls" aria-label="Scan settings">
+    <div class="ctl">
+      <span class="lbl" id="lbl-ticket">Ticket</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="seg" role="group" aria-labelledby="lbl-ticket" id="seg-ticket"></div>
+        <input class="ticket-in" id="ticket-in" type="number" min="50" max="100000" step="50" aria-label="Custom ticket in USD">
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lbl" id="lbl-lev">Leverage (PT loop)</span>
+      <div class="seg" role="group" aria-labelledby="lbl-lev" id="seg-lev"></div>
+    </div>
+    <div class="ctl">
+      <span class="lbl" id="lbl-days">Matures within</span>
+      <div class="seg" role="group" aria-labelledby="lbl-days" id="seg-days"></div>
+    </div>
+    <div class="ctl" style="min-width:0">
+      <span class="lbl" id="lbl-chain">Chains</span>
+      <div class="chips" role="group" aria-labelledby="lbl-chain" id="chips-chain"></div>
+    </div>
+    <div class="ctl">
+      <span class="lbl">Filters</span>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <label class="toggle"><input type="checkbox" id="f-small"> Hide pools under $1M</label>
+        <label class="toggle"><input type="checkbox" id="f-pass"> Only "meets rule"</label>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary" id="summary" aria-live="polite"></div>
+
+  <section class="panel chart-card" aria-label="Return against time to maturity">
+    <div class="chart-head">
+      <h2>Return after costs vs. days to maturity</h2>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--good)"></i>Meets backtested rule</span>
+        <span><i class="dot" style="background:var(--warn)"></i>Thin edge</span>
+        <span><i class="dot" style="background:var(--neutral)"></i>Below cash</span>
+        <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="var(--accent)" stroke-dasharray="4 4" stroke-width="1.5"/></svg>Aave USDC</span>
+        <span class="muted">Dot size = pool liquidity</span>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Scatter of all-in APY against days to maturity"></svg>
+  </section>
+
+  <section class="panel" aria-label="Opportunities">
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="panel">
+      <h2>How the numbers are made</h2>
+      <ul>
+        <li><b>Entry:</b> a real Pendle router quote from a USD stable into the PT, aggregator route included, at $100, $1k, $10k and $50k. Other sizes are interpolated between those quotes. A quote is never allowed to beat the pool's mid price.</li>
+        <li><b>At maturity:</b> each PT redeems for one unit of the asset, valued at its current USD price, minus the cost of converting back to a stable and the gas to redeem.</li>
+        <li><b>All-in APY</b> annualises the period return. For very short maturities a small cost moves it a lot, so read the dollar profit too.</li>
+        <li><b>Edge</b> is all-in APY minus the better of the asset's own floating yield and the Aave USDC rate. <b>Meets rule</b> means an edge of at least 1 point and at least 2 points over cash. That is the entry rule from the 2024-2026 backtest.</li>
+        <li><b>Leverage</b> uses the cheapest listed lending market for that PT (7-day average borrow rate), entry quotes at the levered size, loop gas, and holds to maturity. Health factor is approximate.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Before you trade</h2>
+      <ul>
+        <li>This is a snapshot. Rates and liquidity move by the minute, so check the live quote in Pendle before buying.</li>
+        <li>A PT pays its fixed rate only if the asset holds its value until maturity. Several high-yield names are young synthetic dollars, and a depeg or default loses principal.</li>
+        <li>"Points-priced" markets price in points or airdrops that the PT holder gives up. The fixed rate is real, but there is no floating yield to compare it with.</li>
+        <li>Leverage multiplies both outcomes. Morpho PT loops have been liquidated in minutes, so keep the health factor well above 1.</li>
+        <li>Nothing here is financial advice.</li>
+      </ul>
+      <p id="refresh-note"></p>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const SNAP = /*__SNAPSHOT__*/null;
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const fmtUsd = (x, d = 0) => (x < 0 ? "−$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtPct = (x, d = 1) => (x == null || !isFinite(x)) ? "–" : (x < 0 ? "−" : "") + Math.abs(x * 100).toFixed(d) + "%";
+  const fmtPts = (x) => (x == null || !isFinite(x)) ? "–" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + " pts";
+  const fmtM = (x) => x >= 1e6 ? "$" + (x / 1e6).toFixed(x >= 1e7 ? 0 : 1) + "M" : "$" + Math.round(x / 1e3) + "k";
+  const ann = (ret, days) => ret <= -1 ? -1 : Math.pow(1 + ret, 365 / Math.max(days, 0.5)) - 1;
+  const CHAIN_SLUG = { 1: "ethereum", 42161: "arbitrum", 8453: "base", 56: "bnbchain", 146: "sonic", 999: "hyperevm", 9745: "plasma", 143: "monad", 196: "xlayer", 5000: "mantle", 80094: "berachain", 10: "optimism" };
+
+  const chains = [...new Set(SNAP.markets.map((m) => m.chain_name))];
+  const defaults = { ticket: 1000, lev: 1, maxDays: 60, chains: chains, hideSmall: false, onlyPass: false, sort: "profit", dir: -1 };
+  let st = Object.assign({}, defaults);
+  try { const s = JSON.parse(localStorage.getItem("pt-scanner-state") || "null"); if (s) st = Object.assign(st, s, { chains: (s.chains || chains).filter((c) => chains.includes(c)) }); } catch (e) {}
+  if (!st.chains.length) st.chains = chains;
+  const save = () => { try { localStorage.setItem("pt-scanner-state", JSON.stringify(st)); } catch (e) {} };
+  const open = new Set();
+
+  function ppuAt(q, N) {
+    if (N <= q[0][0]) return { v: q[0][1], beyond: false };
+    for (let i = 1; i < q.length; i++) {
+      if (N <= q[i][0]) {
+        const [s0, v0] = q[i - 1], [s1, v1] = q[i];
+        const t = (Math.log(N) - Math.log(s0)) / (Math.log(s1) - Math.log(s0));
+        return { v: v0 + (v1 - v0) * t, beyond: false };
+      }
+    }
+    const n = q.length;
+    if (n >= 2) {
+      const [s0, v0] = q[n - 2], [s1, v1] = q[n - 1];
+      const slope = (v1 - v0) / (Math.log(s1) - Math.log(s0));
+      return { v: Math.min(v1, v1 + slope * (Math.log(N) - Math.log(s1))), beyond: true };
+    }
+    return { v: q[n - 1][1], beyond: true };
+  }
+
+  function evaluate(m) {
+    const T = st.ticket, L = st.lev, d = m.days;
+    const p1 = ppuAt(m.quotes, T);
+    const units1 = T * p1.v;
+    const fixed = ann(units1 * m.asset_px / T - 1, d);
+    const val1 = units1 * m.asset_px * (1 - m.exit_cost);
+    const gas1 = m.gas.buy + m.gas.redeem;
+    const prof1 = val1 - T - gas1;
+    const apy1 = ann(prof1 / T, d);
+    const alt = Math.max(m.underlying || 0, SNAP.cash_apy);
+    const edge = apy1 - alt, carry = apy1 - SNAP.cash_apy;
+    const signal = carry <= 0 ? "below" : (edge >= 0.01 && carry >= 0.02 ? "pass" : "thin");
+    const impact = 1 - p1.v / m.mid_ppu;
+    const r = { m, units1, fixed, prof1, apy1, edge, carry, signal, gas1, impact, beyond: p1.beyond };
+    if (L === 1) return Object.assign(r, { profit: prof1, apy: apy1, ret: prof1 / T, levNote: null });
+    const opts = (m.loop || []).filter((o) => o.borrow7d != null && o.max_lev >= L && (o.liquidity || 0) >= (L - 1) * T * 1.2);
+    if (!opts.length) {
+      const why = (m.loop || []).length ? "No listed lending market supports " + L + "x at this size" : "No lending market accepts this PT";
+      return Object.assign(r, { profit: null, apy: null, ret: null, levNote: why });
+    }
+    opts.sort((a, b) => a.borrow7d - b.borrow7d);
+    const o = opts[0];
+    const N = L * T, pN = ppuAt(m.quotes, N);
+    const units = N * pN.v, debt = (L - 1) * T;
+    const debtEnd = debt * Math.pow(1 + o.borrow7d, d / 365);
+    const val = units * m.asset_px * (1 - m.exit_cost);
+    const gasL = m.gas.loop_in + m.gas.loop_out;
+    const profit = val - debtEnd - T - gasL;
+    const hf = (units / m.mid_ppu) * o.lltv / debt;
+    return Object.assign(r, { profit, apy: ann(profit / T, d), ret: profit / T, venue: o, hf, spread: fixed - o.borrow7d, gasL, beyond: pN.beyond, levNote: hf < 1.05 ? "Health factor " + hf.toFixed(2) + " at entry: too close to liquidation" : null });
+  }
+
+  function flagsFor(r) {
+    const m = r.m, f = [];
+    if (m.points || !(m.underlying > 0)) f.push(["Points-priced", "No floating yield to compare; the price includes points or airdrops the PT holder gives up", false]);
+    if (m.liquidity < 1e6) f.push(["Small pool", "Pool liquidity " + fmtM(m.liquidity), true]);
+    if (m.under_tvl < 25e6) f.push(["Small issuer", "Under $25M of this asset on Pendle", true]);
+    if (m.asset_px < 0.995) f.push(["$" + m.asset_px.toFixed(3), "Asset trades below $1", true]);
+    if ((m.flags || []).includes("dex_discount")) f.push(["DEX discount", "The asset is cheaper on DEXs than its reference price; returns are capped at the pool's mid price", true]);
+    if (m.days < 7) f.push(["Under a week", "Fixed costs dominate very short holds", false]);
+    if (r.beyond) f.push(["Above largest quote", "Ticket is bigger than the largest live quote; impact may be higher", true]);
+    return f;
+  }
+
+  const COLS = [
+    { key: "name", label: "Market", sort: (r) => r.m.name.toLowerCase() },
+    { key: "days", label: "Matures", sort: (r) => r.m.days },
+    { key: "profit", label: "Profit on ticket", n: true, sort: (r) => r.profit ?? -1e9 },
+    { key: "apy", label: "All-in APY", n: true, sort: (r) => r.apy ?? -1e9 },
+    { key: "implied", label: "Implied", n: true, sort: (r) => r.m.implied },
+    { key: "underlying", label: "Floating", n: true, sort: (r) => r.m.underlying || 0 },
+    { key: "edge", label: "Edge", n: true, sort: (r) => r.edge },
+    { key: "liq", label: "Pool", n: true, sort: (r) => r.m.liquidity },
+    { key: "signal", label: "Signal", sort: (r) => ({ pass: 3, thin: 2, below: 1 })[r.signal] },
+    { key: "flags", label: "Flags" },
+  ];
+
+  function renderControls() {
+    const seg = (el, items, cur, on) => {
+      el.innerHTML = "";
+      items.forEach(([v, label]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", String(v === cur));
+        b.addEventListener("click", () => on(v));
+        el.appendChild(b);
+      });
+    };
+    seg($("seg-ticket"), [[100, "$100"], [1000, "$1k"], [10000, "$10k"]], st.ticket, (v) => { st.ticket = v; update(); });
+    seg($("seg-lev"), [[1, "1x"], [2, "2x"], [3, "3x"], [5, "5x"]], st.lev, (v) => { st.lev = v; update(); });
+    seg($("seg-days"), [[30, "30d"], [45, "45d"], [60, "60d"], [92, "90d"]], st.maxDays, (v) => { st.maxDays = v; update(); });
+    $("ticket-in").value = st.ticket;
+    const cc = $("chips-chain"); cc.innerHTML = "";
+    chains.forEach((c) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip-btn"; b.textContent = c;
+      b.setAttribute("aria-pressed", String(st.chains.includes(c)));
+      b.addEventListener("click", () => {
+        st.chains = st.chains.includes(c) ? st.chains.filter((x) => x !== c) : st.chains.concat(c);
+        if (!st.chains.length) st.chains = chains.slice();
+        update();
+      });
+      cc.appendChild(b);
+    });
+    $("f-small").checked = st.hideSmall; $("f-pass").checked = st.onlyPass;
+  }
+
+  function rows() {
+    let rs = SNAP.markets.filter((m) => m.days <= st.maxDays && st.chains.includes(m.chain_name) && (!st.hideSmall || m.liquidity >= 1e6)).map(evaluate);
+    if (st.onlyPass) rs = rs.filter((r) => r.signal === "pass" && (st.lev === 1 || r.profit != null));
+    const col = COLS.find((c) => c.key === st.sort) || COLS[2];
+    rs.sort((a, b) => { const x = col.sort(a), y = col.sort(b); return (x > y ? 1 : x < y ? -1 : 0) * st.dir; });
+    return rs;
+  }
+
+  function renderFacts() {
+    const f = [["Snapshot", SNAP.asof], ["Aave USDC (7d)", fmtPct(SNAP.cash_apy, 2)], ["Ethereum gas", SNAP.eth_gwei.toFixed(2) + " gwei"], ["Markets priced", String(SNAP.markets.length)]];
+    $("facts").innerHTML = f.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+    $("refresh-note").textContent = "Snapshot taken " + SNAP.asof + ". Ask Claude to re-run the scan for fresh quotes.";
+  }
+
+  function renderSummary(rs) {
+    const ok = rs.filter((r) => r.profit != null);
+    const pass = rs.filter((r) => r.signal === "pass").length;
+    const best = ok.slice().sort((a, b) => b.profit - a.profit)[0];
+    const cashOn = st.ticket * (Math.pow(1 + SNAP.cash_apy, st.maxDays / 365) - 1);
+    const parts = [
+      `<span><b>${rs.length}</b> markets maturing within ${st.maxDays === 92 ? 90 : st.maxDays} days</span>`,
+      `<span><b>${pass}</b> meet the backtested rule</span>`,
+      best ? `<span>Best profit on ${fmtUsd(st.ticket)}${st.lev > 1 ? " at " + st.lev + "x" : ""}: <b>${fmtUsd(best.profit, 2)}</b> (${best.m.name}, ${Math.round(best.m.days)}d)</span>` : "",
+      `<span>Aave USDC would earn about <b>${fmtUsd(cashOn, 2)}</b> over ${st.maxDays === 92 ? 90 : st.maxDays} days</span>`,
+    ];
+    $("summary").innerHTML = parts.join("");
+  }
+
+  function renderChart(rs) {
+    const svg = $("chart"), W = 760, H = 300, ml = 48, mr = 14, mt = 12, mb = 32;
+    const pts = rs.filter((r) => r.apy != null);
+    const xMax = st.maxDays === 92 ? 90 : st.maxDays;
+    let yMin = Math.min(-0.02, ...pts.map((r) => r.apy)), yMax = Math.max(0.2, ...pts.map((r) => r.apy), SNAP.cash_apy);
+    yMin = Math.max(yMin, -0.3); yMax = Math.min(yMax, st.lev > 1 ? 1.5 : 0.6);
+    const step = yMax - yMin > 0.6 ? 0.2 : yMax - yMin > 0.3 ? 0.1 : 0.05;
+    yMin = Math.floor(yMin / step) * step; yMax = Math.ceil(yMax / step) * step;
+    const x = (v) => ml + (Math.min(v, xMax) / xMax) * (W - ml - mr);
+    const y = (v) => mt + (1 - (Math.max(Math.min(v, yMax), yMin) - yMin) / (yMax - yMin)) * (H - mt - mb);
+    let g = '<g class="grid">';
+    for (let v = yMin; v <= yMax + 1e-9; v += step) {
+      g += `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+    }
+    const xs = xMax <= 30 ? 5 : 15;
+    for (let v = 0; v <= xMax; v += xs) g += `<text x="${x(v)}" y="${H - 10}" text-anchor="middle">${v}d</text>`;
+    g += "</g>";
+    g += `<line class="zero" x1="${ml}" x2="${W - mr}" y1="${y(0)}" y2="${y(0)}"/>`;
+    g += `<line class="cash" x1="${ml}" x2="${W - mr}" y1="${y(SNAP.cash_apy)}" y2="${y(SNAP.cash_apy)}"/>`;
+    const color = { pass: "var(--good)", thin: "var(--warn)", below: "var(--neutral)" };
+    const sorted = pts.slice().sort((a, b) => b.m.liquidity - a.m.liquidity);
+    sorted.forEach((r) => {
+      const rad = Math.max(4, Math.min(13, 3 + Math.sqrt(r.m.liquidity / 1e6) * 2.4));
+      const i = SNAP.markets.indexOf(r.m);
+      g += `<circle tabindex="0" data-i="${i}" cx="${x(r.m.days)}" cy="${y(r.apy)}" r="${rad}" fill="${color[r.signal]}"><title>${r.m.name} ${r.m.chain_name}: ${fmtPct(r.apy)}</title></circle>`;
+    });
+    if (!pts.length) g += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">No markets match these settings</text>`;
+    svg.innerHTML = g;
+    svg.querySelectorAll("circle").forEach((c) => {
+      const r = rs.find((z) => SNAP.markets.indexOf(z.m) === +c.dataset.i);
+      const show = (ev) => {
+        const t = $("tip");
+        t.innerHTML = `<b>${r.m.name}</b> · ${r.m.chain_name}<br>Matures ${r.m.expiry} (${Math.round(r.m.days)}d)<br>All-in ${fmtPct(r.apy)} · profit ${fmtUsd(r.profit, 2)} on ${fmtUsd(st.ticket)}<br>Pool ${fmtM(r.m.liquidity)}`;
+        t.hidden = false;
+        const bx = ev.clientX ?? c.getBoundingClientRect().left, by = ev.clientY ?? c.getBoundingClientRect().top;
+        t.style.left = Math.min(bx + 14, window.innerWidth - 270) + "px"; t.style.top = (by + 14) + "px";
+      };
+      c.addEventListener("mousemove", show); c.addEventListener("focus", show);
+      c.addEventListener("mouseleave", () => { $("tip").hidden = true; }); c.addEventListener("blur", () => { $("tip").hidden = true; });
+      c.addEventListener("click", () => { open.add(+c.dataset.i); renderTable(rows()); const tr = document.querySelector(`tr.row[data-i="${c.dataset.i}"]`); if (tr) tr.scrollIntoView({ block: "center", behavior: "smooth" }); });
+    });
+  }
+
+  function renderHead() {
+    $("thead").innerHTML = COLS.map((c) => {
+      const s = c.key === "flags" ? "" : ` class="sortable${c.n ? " n" : ""}" tabindex="0"` + (st.sort === c.key ? ` aria-sort="${st.dir < 0 ? "descending" : "ascending"}"` : "");
+      const label = c.key === "profit" ? `Profit on ${fmtUsd(st.ticket)}${st.lev > 1 ? " · " + st.lev + "x" : ""}` : c.label;
+      return `<th data-k="${c.key}"${s}>${label}</th>`;
+    }).join("");
+    $("thead").querySelectorAll("th.sortable").forEach((th) => {
+      const go = () => { const k = th.dataset.k; if (st.sort === k) st.dir *= -1; else { st.sort = k; st.dir = k === "name" || k === "days" ? 1 : -1; } update(); };
+      th.addEventListener("click", go); th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+  }
+
+  function signalPill(r) {
+    const lab = { pass: "Meets rule", thin: "Thin edge", below: "Below cash" }[r.signal];
+    return `<span class="pill ${r.signal}"><i class="ic"></i>${lab}</span>`;
+  }
+
+  function detailHtml(r) {
+    const m = r.m, kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+    let h = '<div class="dgrid">';
+    h += kv("PT received for " + fmtUsd(st.ticket), r.units1.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " PT");
+    h += kv("Quoted from", m.quote_token + " via Pendle router");
+    h += kv("Fixed APY after entry", fmtPct(r.fixed, 2));
+    h += kv("Entry cost vs mid", fmtPct(r.impact, 3));
+    h += kv("Exit to stable", fmtPct(m.exit_cost, 2) + " · " + m.exit_note);
+    h += kv("Gas (buy + redeem)", fmtUsd(r.gas1, 2));
+    h += kv("Asset price", "$" + m.asset_px.toFixed(4));
+    h += kv("Issuer TVL on Pendle", fmtM(m.under_tvl));
+    h += kv("Quoted sizes", m.quotes.map((q) => fmtUsd(q[0])).join(", "));
+    if (st.lev > 1) {
+      if (r.venue) {
+        h += kv("Lending market", r.venue.protocol + " · borrow " + r.venue.debt);
+        h += kv("Borrow APY (7d avg)", fmtPct(r.venue.borrow7d, 2));
+        h += kv("Fixed minus borrow", fmtPts(r.spread));
+        h += kv("Health factor at entry (approx.)", r.hf.toFixed(2) + " · LLTV " + fmtPct(r.venue.lltv, 1));
+        h += kv("PT oracle", r.venue.pt_oracle || "unknown");
+        h += kv("Loop gas (in + out)", fmtUsd(r.gasL, 2));
+      } else h += kv("Leverage", r.levNote);
+    }
+    h += "</div>";
+    if ((m.loop || []).length) {
+      h += '<div class="venues"><table><thead><tr><th>Lending market</th><th>Borrow</th><th class="n">Borrow 7d</th><th class="n">LLTV</th><th class="n">Max lev.</th><th class="n">Liquidity</th><th>PT oracle</th></tr></thead><tbody>';
+      m.loop.slice().sort((a, b) => (a.borrow7d ?? 9) - (b.borrow7d ?? 9)).forEach((o) => {
+        h += `<tr><td>${o.protocol}</td><td>${o.debt}</td><td class="n">${fmtPct(o.borrow7d, 2)}</td><td class="n">${fmtPct(o.lltv, 1)}</td><td class="n">${(o.max_lev || 0).toFixed(1)}x</td><td class="n">${fmtM(o.liquidity || 0)}</td><td>${o.pt_oracle || "unknown"}</td></tr>`;
+      });
+      h += "</tbody></table></div>";
+    }
+    const slug = CHAIN_SLUG[m.chain] || "ethereum";
+    h += `<div class="links"><a href="https://app.pendle.finance/trade/markets/${m.address}/swap?view=pt&chain=${slug}" target="_blank" rel="noopener">Open this market in Pendle</a><span class="muted mono">${m.address}</span><button class="copy" type="button" data-copy="${m.address}">Copy address</button></div>`;
+    return h;
+  }
+
+  function renderTable(rs) {
+    const tb = $("tbody");
+    if (!rs.length) { tb.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No markets match these settings. Widen the maturity window or turn off a filter.</td></tr>`; return; }
+    let h = "";
+    rs.forEach((r) => {
+      const m = r.m, i = SNAP.markets.indexOf(m);
+      const prof = r.profit == null ? `<span class="muted">${r.levNote || "–"}</span>` : `<span class="big ${r.profit >= 0 ? "pos" : "neg"}">${fmtUsd(r.profit, 2)}</span><br><small class="muted">${fmtPct(r.ret, 2)} over ${Math.round(m.days)}d</small>`;
+      const apy = r.apy == null ? "–" : `<span class="big">${fmtPct(r.apy)}</span>` + (st.lev > 1 && r.levNote ? `<br><small class="neg">${r.levNote}</small>` : "");
+      const flags = flagsFor(r).map(([t, tip, risk]) => `<span class="flag${risk ? " risk" : ""}" title="${tip}">${t}</span>`).join("");
+      h += `<tr class="row" tabindex="0" data-i="${i}" aria-expanded="${open.has(i)}">
+        <td><div class="mkt"><b>${m.name}<span class="chain">${m.chain_name}</span></b><small>${m.protocol || ""}</small></div></td>
+        <td class="mono">${m.expiry}<br><small class="muted">in ${Math.round(m.days)}d</small></td>
+        <td class="n">${prof}</td>
+        <td class="n">${apy}</td>
+        <td class="n">${fmtPct(m.implied)}</td>
+        <td class="n">${m.underlying > 0 ? fmtPct(m.underlying) : '<span class="muted">none</span>'}</td>
+        <td class="n ${r.edge >= 0 ? "pos" : "neg"}">${fmtPts(r.edge)}</td>
+        <td class="n">${fmtM(m.liquidity)}</td>
+        <td>${signalPill(r)}</td>
+        <td><div class="flags">${flags}</div></td></tr>`;
+      if (open.has(i)) h += `<tr class="detail"><td colspan="${COLS.length}">${detailHtml(r)}</td></tr>`;
+    });
+    tb.innerHTML = h;
+    tb.querySelectorAll("tr.row").forEach((tr) => {
+      const tog = () => { const i = +tr.dataset.i; open.has(i) ? open.delete(i) : open.add(i); renderTable(rows()); const n = document.querySelector(`tr.row[data-i="${i}"]`); if (n) n.focus(); };
+      tr.addEventListener("click", tog);
+      tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tog(); } });
+    });
+    tb.querySelectorAll("button.copy").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const done = () => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy address"; }, 1400); };
+      try { navigator.clipboard.writeText(b.dataset.copy).then(done, () => selectText(b)); } catch (err) { selectText(b); }
+    }));
+  }
+  function selectText(b) { const s = b.previousElementSibling; const rg = document.createRange(); rg.selectNodeContents(s); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); }
+
+  function update() {
+    save(); renderControls(); renderHead();
+    const rs = rows();
+    renderSummary(rs); renderChart(rs); renderTable(rs);
+  }
+
+  $("ticket-in").addEventListener("change", (e) => { const v = Math.max(50, Math.min(100000, +e.target.value || 1000)); st.ticket = v; update(); });
+  $("f-small").addEventListener("change", (e) => { st.hideSmall = e.target.checked; update(); });
+  $("f-pass").addEventListener("change", (e) => { st.onlyPass = e.target.checked; update(); });
+  renderFacts();
+  update();
+})();
+</script>
